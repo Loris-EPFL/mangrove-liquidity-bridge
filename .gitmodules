@@ -4,3 +4,6 @@
 [submodule "lib/prb-math"]
 	path = lib/prb-math
 	url = https://github.com/PaulRBerg/prb-math
+[submodule "lib/prb-contracts"]
+	path = lib/prb-contracts
+	url = https://github.com/PaulRBerg/prb-contracts
