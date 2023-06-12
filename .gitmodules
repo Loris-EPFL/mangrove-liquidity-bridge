@@ -7,3 +7,6 @@
 [submodule "lib/prb-contracts"]
 	path = lib/prb-contracts
 	url = https://github.com/PaulRBerg/prb-contracts
+[submodule "lib/v3-periphery"]
+	path = lib/v3-periphery
+	url = https://github.com/Uniswap/v3-periphery
