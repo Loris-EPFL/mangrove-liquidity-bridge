@@ -1,0 +1,22 @@
+# .envdist (template of .env file, to be copied as .env and filled with your values)
+
+# [Optional] Ethernal credentials, used for sync in `npm scripts`, a fork blocks
+# and transactions explorer. See : https://tryethernal.com/
+export ETHERNAL_EMAIL=your@email.test
+export ETHERNAL_PASSWORD=your
+
+# anvil
+export LOCAL_URL=http://127.0.0.1:8545
+
+# Select Profile and corresponding RPC URL
+# FOUNDRY_PROFILE is used to read addresses.json file (containing addresses of contracts)
+# RPC_URL is used to fork the chain with anvil (see npm script "anvil")
+export FOUNDRY_PROFILE=mumbai
+export RPC_URL=https://polygon-mumbai.alchemy-or-other.com/your-key
+
+#export FOUNDRY_PROFILE=polygon
+#export RPC_URL=https://polygon-mainnet.alchemy-or-other.com/your-key
+
+
+
+

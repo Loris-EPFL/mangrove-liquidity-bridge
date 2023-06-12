@@ -1,0 +1,22 @@
+{
+  "name": "mangrove-liquidity-bridge",
+  "version": "0.9.0",
+  "description": "Liquidity Bridge from DexLogic to Mangrovian order-book",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "anvil": "npm config set script-shell \"/bin/bash\"; source .env; anvil -f=$RPC_URL",
+    "ethernal-reset": "npm config set script-shell \"/bin/bash\"; source .env; node node_modules/ethernal/bin/index.js reset mumbai-anvil",
+    "ethernal-start": "npm config set script-shell \"/bin/bash\"; source .env; node node_modules/ethernal/bin/index.js listen"
+  },
+  "author": "Guillaume Garchery",
+  "license": "ISC",
+  "dependencies": {
+    "@mangrovedao/mangrove.js": "^1.2.10",
+    "dotenv": "^16.1.4",
+    "yargs": "^17.7.2"
+  }
+}

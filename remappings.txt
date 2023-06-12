@@ -1,0 +1,10 @@
+mgv_src/=node_modules/@mangrovedao/mangrove-core/src/
+mgv_lib/=node_modules/@mangrovedao/mangrove-core/lib/
+mgv_test/=node_modules/@mangrovedao/mangrove-core/test/
+mgv_script/=node_modules/@mangrovedao/mangrove-core/script/
+@prb/math/=lib/prb-math/src/
+@prb/contracts/=lib/prb-contracts/src/
+@uniswap/v3-periphery/=lib/v3-periphery/
+@uniswap/v3-core/=lib/v3-core/
+
+forge-std/=lib/forge-std/src
