@@ -35,7 +35,9 @@ contract DexUniV3 is IDexLogic, AccessControlled {
     /// @notice utility function to convert uint160 (for sqrtPrice96) to UD60x18
     function toUD60x18(uint160 q) internal pure returns (UD60x18) {
         UD60x18 intPart = ud(uint(q >> 96) * 1e18);
-        UD60x18 fracPart = ud((uint((q << 64) >> 64) * 1e18) >> 96);
+        UD60x18 fracPart = ud(
+            (uint(q & uint160(0xFFFFFFFFFFFFFFFFFFFFFFFF)) * 1e18) >> 96
+        );
         return intPart + fracPart;
     }
 
