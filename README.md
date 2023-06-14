@@ -10,9 +10,16 @@ order-book.
 2. `npm install`
 3. [Install foundry](https://book.getfoundry.sh/getting-started/installation)
 4. Provide/Create an `.env` file following `.envdist` format
-5. Specify the chain to test (polygon or mumbai) by setting
+5. Specify the chain to test (polygon or mumbai) by setting `FOUNDRY_PROFILE` to `polygon` or `mumbai`
 6. Run `npm run anvil` to fork the chain
 7. Run `source .env; forge test -f $LOCAL_URL` to run the tests
+
+## Notes
+
+The current repos does not allow to test the full bridge logic on the same chain because :
+
+- on polygon : we don't have a Mangrove order-book deployed
+- on mumbai : we don't have a Uniswap pool deployed
 
 ## Next steps
 
