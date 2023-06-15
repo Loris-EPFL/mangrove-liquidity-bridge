@@ -7,12 +7,13 @@ order-book.
 ## How to use
 
 1. Clone
-2. `npm install`
+2. Run `npm install`
 3. [Install foundry](https://book.getfoundry.sh/getting-started/installation)
-4. Provide/Create an `.env` file following `.envdist` format
-5. Specify the chain to test (polygon or mumbai) by setting `FOUNDRY_PROFILE` to `polygon` or `mumbai`
-6. Run `npm run anvil` to fork the chain
-7. Run `source .env; forge test -f $LOCAL_URL` to run the tests
+4. Run `forge install`
+5. Provide/Create an `.env` file following `.envdist` format
+6. Specify the chain to test (polygon or mumbai) by setting `FOUNDRY_PROFILE` to `polygon` or `mumbai`
+7. Run `npm run anvil` to fork the chain
+8. Run `source .env; forge test -f $LOCAL_URL` to run the tests
 
 ## Notes
 
