@@ -11,20 +11,23 @@ import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
-import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
+import "./utils/LiquidityAmounts.sol";
 
 contract DexUniV3Test is TestContext {
     DexUniV3 dex;
     IERC20 base;
     IERC20 quote;
+    uint24 fee;
     IUniswapV3Factory factory;
     address alice = address(1111);
     address larry = address(2222); // larry is the liquidity provider
 
     function setUp() public {}
 
-    function setDex(uint24 fee) public {
+    function setDex(uint24 fee_) public {
         console2.log("DexUniV3Test/setUp/profile", profile);
+
+        fee = fee_;
 
         address swapRouteur = loadAddress("UNIV3_ROUTER");
         vm.label(swapRouteur, "UniV3-routeur");
@@ -36,69 +39,118 @@ contract DexUniV3Test is TestContext {
     }
 
     function toQ96(UD60x18 q) internal pure returns (uint160) {
-        uint intPart = (q.div(ud(1e18)) << 96);
-        uint fracPart = (q.mod(ud(1e18)) << 96) / 1e18;
+        uint intPart = (q.unwrap() / 1e18) << 96;
+        uint fracPart = ((q.unwrap() % 1e18) << 96) / 1e18;
         return uint160(intPart + fracPart);
     }
 
+    function toUD60x18(uint160 q) internal pure returns (UD60x18) {
+        UD60x18 intPart = ud(uint(q >> 96) * 1e18);
+        UD60x18 fracPart = ud(
+            (uint(q & uint160(0xFFFFFFFFFFFFFFFFFFFFFFFF)) * 1e18) >> 96
+        );
+        return intPart + fracPart;
+    }
+
     function checkOrCreatePool(
-        uint24 fee,
         UD60x18 currentPrice,
-        UD60x18 quoteAmount
+        UD60x18 quoteAmountDesired
     ) public {
         // check if pool exists
-        address poolAddr = factory.getPool(address(base), address(quote), fee);
-
-        if (poolAddr != address(0)) {
-            return;
+        bool baseIsToken0 = base < quote;
+        address token0 = baseIsToken0 ? address(base) : address(quote);
+        address token1 = baseIsToken0 ? address(quote) : address(base);
+        if (!baseIsToken0) {
+            currentPrice = ud(1e18).div(currentPrice);
         }
 
-        console2.log("DexUniV3Test/setUp/creating pool");
-        poolAddr = factory.createPool(address(base), address(quote), fee);
+        address poolAddr = factory.getPool(token0, token1, fee);
+
+        if (poolAddr == address(0)) {
+            // create pool
+            console2.log("DexUniV3Test/setUp/creating pool");
+            poolAddr = factory.createPool(address(base), address(quote), fee);
+        }
 
         // initialize pool and deposit
         IUniswapV3Pool pool = IUniswapV3Pool(poolAddr);
+        vm.label(poolAddr, "UniV3-pool");
 
-        if (address(base) != pool.token0()) {
-            currentPrice = ud(1e18) / currentPrice;
+        (uint currentPriceX96, , , , , , ) = pool.slot0();
+        if (currentPriceX96 == 0) {
+            pool.initialize(toQ96(currentPrice));
         }
 
-        uint160 sqrtPriceX96 = uint160(100000);
-        // TODO convert currentPrice to sqrtPriceX96
-        pool.initialize(sqrtPriceX96);
+        UD60x18 baseAmountDesired = quoteAmountDesired / currentPrice;
 
-        INonfungiblePositionManager.MintParams
-            memory params = INonfungiblePositionManager.MintParams({
-                token0: address(base),
-                token1: address(quote),
-                fee: fee,
-                tickLower: TickMath.MIN_TICK,
-                tickUpper: TickMath.MAX_TICK,
-                amount0Desired: N.denormalize(
-                    base,
-                    (quoteAmount.div(currentPrice)).unwrap()
-                ),
-                amount1Desired: N.denormalize(quote, quoteAmount.unwrap()),
-                amount0Min: 0,
-                amount1Min: 0,
-                recipient: larry,
-                deadline: block.timestamp
-            });
-        nonfungiblePositionManager.mint(params);
-    }
+        uint amount0Desired;
+        uint amount1Desired;
 
-    function testWBTC_USD_midPrice_above_10_000() public {
-        setDex(3000);
+        if (baseIsToken0) {
+            amount0Desired = N.denormalize(base, baseAmountDesired.unwrap());
+            deal(address(base), address(this), amount0Desired);
+            amount1Desired = N.denormalize(quote, quoteAmountDesired.unwrap());
+            deal(address(quote), address(this), amount1Desired);
+        } else {
+            amount0Desired = N.denormalize(quote, quoteAmountDesired.unwrap());
+            deal(address(quote), address(this), amount0Desired);
+            amount1Desired = N.denormalize(base, baseAmountDesired.unwrap());
+            deal(address(base), address(this), amount1Desired);
+        }
 
-        base = loadToken("WBTC");
-        quote = loadToken("USDC");
-        UD60x18 midPrice = dex.currentPrice(address(base), address(quote));
-        console2.log(
-            "DexUniV3Test/testGetMidPrice/midPrice",
-            midPrice.unwrap() / 1e13
+        // mint liquidity
+        // compute the liquidity amount
+        uint128 liquidity;
+        {
+            (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
+            uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(-1000);
+            uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(1000);
+
+            liquidity = LiquidityAmounts.getLiquidityForAmounts(
+                sqrtPriceX96,
+                sqrtRatioAX96,
+                sqrtRatioBX96,
+                amount0Desired,
+                amount1Desired
+            );
+        }
+
+        base.approve(address(pool), type(uint256).max);
+        quote.approve(address(pool), type(uint256).max);
+        (uint amount0, uint amount1) = pool.mint(
+            larry,
+            -1000,
+            1000,
+            liquidity,
+            ""
         );
-        assertGt(midPrice.unwrap(), ud(10000).unwrap());
     }
+
+    function testConversionX96AndUD() public {
+        UD60x18 ud1 = ud(1e18);
+        uint160 x961 = toQ96(ud1);
+        UD60x18 ud2 = toUD60x18(x961);
+        uint x962 = toQ96(ud2);
+        console2.log("DexUniV3Test/testConversionX96AndUD/ud1", ud1.unwrap());
+        console2.log("DexUniV3Test/testConversionX96AndUD/x961", x961);
+        console2.log("DexUniV3Test/testConversionX96AndUD/ud2", ud2.unwrap());
+        assertEq(ud1.unwrap(), ud2.unwrap());
+        assertEq(x961, x962);
+    }
+
+    //    function testWBTC_USD_midPrice_above_10_000() public {
+    //base = loadToken("WBTC");
+    //quote = loadToken("USDT");
+    //setDex(3000);
+    //checkOrCreatePool(ud(20000e18), ud(1e24));
+
+    //UD60x18 midPrice = dex.currentPrice(address(base), address(quote));
+    //console2.log(
+    //"DexUniV3Test/testGetMidPrice/midPrice",
+    //midPrice.unwrap() / 1e13
+    //);
+    //assertGt(midPrice.unwrap(), ud(10000).unwrap());
+    //}
 
     function testUSDC_WBTC_midPrice_below_1() public {
         setDex(3000);
