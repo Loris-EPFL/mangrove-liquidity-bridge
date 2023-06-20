@@ -10,9 +10,9 @@ import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import "src/utils/TickMath.sol";
-import "./utils/LiquidityAmounts.sol";
 import "src/utils/MathLib.sol";
+import "src/utils/TickMath.sol";
+import "src/utils/LiquidityAmounts.sol";
 
 contract DexUniV3Test is TestContext {
     DexUniV3 dex;
@@ -20,10 +20,13 @@ contract DexUniV3Test is TestContext {
     IERC20 quote;
     uint24 fee;
     IUniswapV3Factory factory;
-    address alice = address(1111);
-    address larry = address(2222); // larry is the liquidity provider
+    address alice;
+    address larry; // larry is the liquidity provider
 
-    function setUp() public {}
+    function setUp() public {
+        alice = address(1111);
+        larry = address(2222);
+    }
 
     function setDex(uint24 fee_) public {
         console2.log("DexUniV3Test/setUp/profile", profile);
