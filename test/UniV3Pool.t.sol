@@ -11,6 +11,7 @@ import {TickMath} from "src/utils/TickMath.sol";
 import {LiquidityAmounts} from "src/utils/LiquidityAmounts.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
+import {ERC20Mock} from "./mock/ERC20Mock.sol";
 
 contract UniV3PoolTest is TestContext {
     IERC20 base;
@@ -42,8 +43,8 @@ contract UniV3PoolTest is TestContext {
         larry = address(2222);
         vm.label(larry, "larry");
 
-        base = loadToken("WBTC");
-        quote = loadToken("USDC");
+        base = new ERC20Mock("WBTC", 18);
+        quote = new ERC20Mock("USDC", 6);
 
         // adjusting inputs for token0/token1
         if (base < quote) {

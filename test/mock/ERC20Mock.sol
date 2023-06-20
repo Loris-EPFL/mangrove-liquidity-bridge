@@ -1,15 +1,15 @@
-pragma solidity <0.9.0;
+// SPDX-License-Identifier: Unlicense
+pragma solidity ^0.8.10;
 
-import "../../../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import {ERC20BL} from "mgv_src/toy/ERC20BL.sol";
 
-contract ERC20Mock is ERC20 {
-    uint8 public _decimals;
+contract ERC20Mock is ERC20BL {
+    uint8 _decimals;
 
     constructor(
-        string memory _name,
         string memory _symbol,
         uint8 decimals_
-    ) ERC20(_name, _symbol) {
+    ) ERC20BL(_symbol, _symbol) {
         _decimals = decimals_;
     }
 
