@@ -10,8 +10,9 @@ import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
+import "src/utils/TickMath.sol";
 import "./utils/LiquidityAmounts.sol";
+import "src/utils/MathLib.sol";
 
 contract DexUniV3Test is TestContext {
     DexUniV3 dex;
@@ -36,20 +37,6 @@ contract DexUniV3Test is TestContext {
 
         vm.label(address(factory), "UniV3-factory");
         dex = new DexUniV3(swapRouteur, address(factory), fee);
-    }
-
-    function toQ96(UD60x18 q) internal pure returns (uint160) {
-        uint intPart = (q.unwrap() / 1e18) << 96;
-        uint fracPart = ((q.unwrap() % 1e18) << 96) / 1e18;
-        return uint160(intPart + fracPart);
-    }
-
-    function toUD60x18(uint160 q) internal pure returns (UD60x18) {
-        UD60x18 intPart = ud(uint(q >> 96) * 1e18);
-        UD60x18 fracPart = ud(
-            (uint(q & uint160(0xFFFFFFFFFFFFFFFFFFFFFFFF)) * 1e18) >> 96
-        );
-        return intPart + fracPart;
     }
 
     function checkOrCreatePool(
@@ -78,7 +65,7 @@ contract DexUniV3Test is TestContext {
 
         (uint currentPriceX96, , , , , , ) = pool.slot0();
         if (currentPriceX96 == 0) {
-            pool.initialize(toQ96(currentPrice));
+            pool.initialize(MathLib.toQ96(currentPrice));
         }
 
         UD60x18 baseAmountDesired = quoteAmountDesired / currentPrice;
@@ -124,18 +111,6 @@ contract DexUniV3Test is TestContext {
             liquidity,
             ""
         );
-    }
-
-    function testConversionX96AndUD() public {
-        UD60x18 ud1 = ud(1e18);
-        uint160 x961 = toQ96(ud1);
-        UD60x18 ud2 = toUD60x18(x961);
-        uint x962 = toQ96(ud2);
-        console2.log("DexUniV3Test/testConversionX96AndUD/ud1", ud1.unwrap());
-        console2.log("DexUniV3Test/testConversionX96AndUD/x961", x961);
-        console2.log("DexUniV3Test/testConversionX96AndUD/ud2", ud2.unwrap());
-        assertEq(ud1.unwrap(), ud2.unwrap());
-        assertEq(x961, x962);
     }
 
     //    function testWBTC_USD_midPrice_above_10_000() public {
