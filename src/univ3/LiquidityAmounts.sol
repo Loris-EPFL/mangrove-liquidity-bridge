@@ -2,8 +2,10 @@
 pragma solidity >=0.5.0;
 
 //import "@uniswap/v3-core/contracts/libraries/FullMath.sol";
-import "@uniswap/v3-core/contracts/libraries/FixedPoint96.sol";
+// replaced by :
 import "@prb/math/Common.sol";
+
+import "@uniswap/v3-core/contracts/libraries/FixedPoint96.sol";
 
 /// @title Liquidity amount functions
 /// @notice Provides functions for computing liquidity amounts from token amounts and prices

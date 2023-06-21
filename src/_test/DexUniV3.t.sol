@@ -10,9 +10,9 @@ import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import "src/utils/MathLib.sol";
-import "src/utils/TickMath.sol";
-import "src/utils/LiquidityAmounts.sol";
+import "src/math/MathLib.sol";
+import "src/math/TickMath.sol";
+import "src/univ3/LiquidityAmounts.sol";
 
 contract DexUniV3Test is TestContext {
     DexUniV3 dex;

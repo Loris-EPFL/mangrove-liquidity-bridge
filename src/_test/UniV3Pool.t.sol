@@ -5,15 +5,18 @@ import "forge-std/Test.sol";
 import {TestContext} from "./utils/TestContext.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+//import "../../lib-0_7_6/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+//import "../../lib-0_7_6/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {IERC20} from "mgv_src/MgvLib.sol";
-import {MathLib} from "src/utils/MathLib.sol";
-import {TickMath} from "src/utils/TickMath.sol";
-import {LiquidityAmounts} from "src/utils/LiquidityAmounts.sol";
+import {MathLib} from "src/math/MathLib.sol";
+import {TickMath} from "src/math/TickMath.sol";
+import {LiquidityAmounts} from "src/univ3/LiquidityAmounts.sol";
+import {LiquidityManager} from "src/univ3/LiquidityManager.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 import {ERC20Mock} from "./mock/ERC20Mock.sol";
 
-contract UniV3PoolTest is TestContext {
+contract UniV3PoolTest is TestContext, LiquidityManager {
     IERC20 base;
     IERC20 quote;
     bool baseIsToken0;
@@ -23,7 +26,9 @@ contract UniV3PoolTest is TestContext {
 
     uint24 fee = 3000;
 
+    // currentPrice : 1 base in terms of quote
     UD60x18 currentPrice = ud(25_000e18);
+    // tokenPrice : 1 token0 in terms of token1
     UD60x18 tokenPrice;
 
     address alice;
@@ -64,7 +69,12 @@ contract UniV3PoolTest is TestContext {
     }
 
     function getOrCreatePool() public {
-        factory = IUniswapV3Factory(loadAddress("UNIV3_FACTORY"));
+        //factory = IUniswapV3Factory(loadAddress("UNIV3_FACTORY"));
+        // factory is loaded from previously deployed contract
+        // (see src-0_7_6/build_to_deploy_artefact.sol)
+        factory = IUniswapV3Factory(
+            deployCode("UniswapV3Factory.sol:UniswapV3Factory")
+        );
         vm.label(address(factory), "UniV3-factory");
 
         address poolAddress = factory.getPool(
@@ -91,6 +101,10 @@ contract UniV3PoolTest is TestContext {
         } else {
             tokenPrice = MathLib.toUD60x18(sqrtPriceX96).pow(ud(2e18));
         }
+        console2.log(
+            "UniV3PoolTest/getOrCreatePool/price",
+            tokenPrice.unwrap()
+        );
     }
 
     /// @notice deal and approve for one token
@@ -135,47 +149,21 @@ contract UniV3PoolTest is TestContext {
     function testUniV3Pool() public {
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         UD60x18 price = MathLib.toUD60x18(sqrtPriceX96).pow(ud(2e18));
-    }
-
-    struct CallbackData {
-        address token0;
-        address token1;
-        address payer;
+        console2.log("UniV3PoolTest/testUniV3Pool/price", price.unwrap());
     }
 
     function testMintLiquidityOnUniV3Pool() public {
-        // compute the liquidity amount
-        uint128 liquidity;
-        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
-        uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(-1000);
-        uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(1000);
-
-        liquidity = LiquidityAmounts.getLiquidityForAmounts(
-            sqrtPriceX96,
-            sqrtRatioAX96,
-            sqrtRatioBX96,
+        // warning : ticks (left and right) should be in line
+        // with the underlying pool tick spacing (i.e. a multiple of the
+        // pool tick spacing). Typical pool tick spacing is 10 for 5bps,
+        // 60 for 500bps, and 200 for 3000bps
+        mint(
+            pool,
+            larry,
+            -600,
+            600,
             token0.balanceOf(larry) / 2,
             token1.balanceOf(larry) / 2
-        );
-        console2.log(
-            "UniV3PoolTest/testMintLiquidityOnUniV3Pool/liquidity",
-            liquidity
-        );
-
-        bytes memory data = abi.encode(
-            CallbackData({
-                token0: address(token0),
-                token1: address(token1),
-                payer: larry
-            })
-        );
-
-        (uint amount0, uint amount1) = pool.mint(
-            larry,
-            -1000,
-            1000,
-            liquidity,
-            data
         );
     }
 }

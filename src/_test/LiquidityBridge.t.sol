@@ -5,13 +5,13 @@ import "forge-std/Test.sol";
 import {TestContext} from "./utils/TestContext.sol";
 
 import {IERC20} from "mgv_src/MgvLib.sol";
-import {ERC20Normalizer} from "../src/ERC20Normalizer.sol";
+import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
-import {LiquidityBridge} from "../src/LiquidityBridge.sol";
+import {LiquidityBridge} from "src/LiquidityBridge.sol";
 import {IMangrove} from "mgv_src/IMangrove.sol";
 import {MgvStructs} from "mgv_src/MgvLib.sol";
-import {IDexLogic} from "../src/DexLogic/IDexLogic.sol";
-import {DexFix} from "../src/DexLogic/DexFix.sol";
+import {IDexLogic} from "src/DexLogic/IDexLogic.sol";
+import {DexFix} from "src/DexLogic/DexFix.sol";
 
 contract LiquidityBridgeTest is TestContext {
     IMangrove mgv;

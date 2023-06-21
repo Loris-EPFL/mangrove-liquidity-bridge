@@ -5,9 +5,9 @@ import "forge-std/Test.sol";
 import "forge-std/StdJson.sol";
 import "forge-std/StdUtils.sol";
 import {IERC20} from "mgv_src/MgvLib.sol";
-import {ERC20Normalizer} from "../src/ERC20Normalizer.sol";
+import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
-import {DexFix} from "../src/DexLogic/DexFix.sol";
+import {DexFix} from "src/DexLogic/DexFix.sol";
 
 contract DexFixTest is Test {
     using stdJson for string;

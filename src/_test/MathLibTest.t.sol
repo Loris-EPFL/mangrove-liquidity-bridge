@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import "src/utils/MathLib.sol";
+import "src/math/MathLib.sol";
 
 contract MathLibTest is Test {
     function testConversionX96AndUD() public {

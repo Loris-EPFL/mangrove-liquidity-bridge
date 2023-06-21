@@ -4,23 +4,32 @@ This repo exposes a liquidity bridge logic (`LiquidityBridge.sol`), from an
 on-chain exchange (`IDexLogic.sol`), typically a Uniswap pool, to a mangrovian
 order-book.
 
-## How to use
+## Installation
 
 1. Clone
 2. Run `npm install`
 3. [Install foundry](https://book.getfoundry.sh/getting-started/installation)
-4. Run `forge install`
-5. Provide/Create an `.env` file following `.envdist` format
-6. Specify the chain to test (polygon or mumbai) by setting `FOUNDRY_PROFILE` to `polygon` or `mumbai`
-7. Run `npm run anvil` to fork the chain
-8. Run `source .env; forge test -f $LOCAL_URL` to run the tests
+4. Install and build for `0_7_6` profile
+   1. Run `export FOUNDRY_PROFILE=0_7_6`
+   2. Run `forge build`
+5. Install and build for `default` profile
+   1. Run `export FOUNDRY_PROFILE=default`
+   2. Run `forge build`
+
+## How to use it
+
+1. Provide/Create an `.env` file following `.envdist` format
+2. Specify the chain to test (polygon or mumbai) by setting `FOUNDRY_PROFILE` to `polygon` or `mumbai`
+3. Run `npm run anvil` to fork the chain
+4. Run `source .env; forge test -f $LOCAL_URL` to run the tests
 
 ## Notes
 
-The current repos does not allow to test the full bridge logic on the same chain because :
+(IN HEAVILY PROGRESS) The current repos does not allow to test the full bridge
+logic on the same chain because :
 
 - on polygon : we don't have a Mangrove order-book deployed
-- on mumbai : we don't have a Uniswap pool deployed
+- on mumbai : ~~we don't have a Uniswap pool deployed~~
 
 ## Next steps
 
@@ -32,4 +41,3 @@ The current repos does not allow to test the full bridge logic on the same chain
 - Implement a **tenacity** behavior (taking reneg cost into acount and avoid
   certain renegs when more expensive than bridging)
 - Add convenient functions to TestContext (check MangroveTest before)
-

@@ -4,7 +4,7 @@ pragma solidity <0.9.0;
 import "../lib-0_7_6/v3-core/contracts/UniswapV3Factory.sol";
 import "../lib-0_7_6/v3-core/contracts/UniswapV3Pool.sol";
 
-contract UniswapV3PoolTest {
+contract BuildToDeployArtefact {
     UniswapV3Factory factory;
     UniswapV3Pool pool;
 
