@@ -14,3 +14,16 @@ local="${LOCAL_URL}$"
 tab_width=2
 int_types="short"
 number_underscores="thousands"
+
+[profile.0_7_6]
+# `src` must be different fot it to work.
+# We also recommend putting all Solidity test files and scripts inside `src*/`.
+src = 'src-0_7_6'
+out = 'out'
+# The order matters! When using `forge install` with FOUNDRY_PROFILE=0_7_6,
+# it will use the first directory as the installation path.
+# If the library is compatible with all versions,
+# you can install it with the default profile.
+libs = ['lib-0_7_6']
+optimizer = false
+solc_version = '0.7.6'
