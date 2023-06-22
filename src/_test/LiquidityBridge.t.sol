@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity >=0.8.10;
 
 import "forge-std/Test.sol";
 import {TestContext} from "./utils/TestContext.sol";
@@ -30,7 +30,8 @@ contract LiquidityBridgeTest is TestContext {
 
     receive() external payable {}
 
-    function setUp() public {
+    function setUp() public override {
+        super.setUp();
         mgv = IMangrove(payable(loadAddress("MANGROVE")));
         base = loadToken("WMATIC");
         quote = loadToken("USDT");

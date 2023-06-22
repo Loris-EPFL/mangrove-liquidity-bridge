@@ -8,4 +8,5 @@ mgv_script/=node_modules/@mangrovedao/mangrove-core/script/
 @uniswap/v3-core/=lib/v3-core/
 @openzeppelin/=lib/openzeppelin-contracts/contracts/
 
-forge-std/=lib/forge-std/src
+forge-std/=lib/forge-std/src/
+ds-test/=lib/forge-std/lib/ds-test/src/

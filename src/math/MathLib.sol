@@ -17,4 +17,10 @@ library MathLib {
         );
         return intPart + fracPart;
     }
+
+    function toInt(uint256 q) internal pure returns (int256) {
+        require(q <= uint256(type(int256).max), "MathLib/toInt/overflow");
+
+        return int256(q);
+    }
 }

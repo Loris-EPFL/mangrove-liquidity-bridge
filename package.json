@@ -8,6 +8,11 @@
     "test": "test"
   },
   "scripts": {
+    "clean": "forge clean",
+    "build-076": "export FOUNDRY_PROFILE=0_7_6; forge build --skip .t.sol",
+    "build-default": "export FOUNDRY_PROFILE=default; forge build",
+    "build": "npm run build-076 && npm run build-default",
+    "test": "npm config set script-shell \"/bin/bash\"; source .env; forge test -f $LOCAL_URL",
     "anvil": "npm config set script-shell \"/bin/bash\"; source .env; anvil -f=$RPC_URL",
     "ethernal-reset": "npm config set script-shell \"/bin/bash\"; source .env; node node_modules/ethernal/bin/index.js reset mumbai-anvil",
     "ethernal-start": "npm config set script-shell \"/bin/bash\"; source .env; node node_modules/ethernal/bin/index.js listen"

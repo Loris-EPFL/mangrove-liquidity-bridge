@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.10;
+pragma solidity >=0.8.10;
 
 import "forge-std/Test.sol";
 import "forge-std/StdUtils.sol";
@@ -23,7 +23,8 @@ contract DexUniV3Test is TestContext {
     address alice;
     address larry; // larry is the liquidity provider
 
-    function setUp() public {
+    function setUp() public override {
+        super.setUp();
         alice = address(1111);
         larry = address(2222);
     }

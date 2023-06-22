@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.10;
+pragma solidity >=0.8.10;
 
 import {IERC20} from "mgv_src/MgvLib.sol";
 import {IDexLogic} from "./IDexLogic.sol";

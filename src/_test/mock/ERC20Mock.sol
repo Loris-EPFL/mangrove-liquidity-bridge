@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.10;
+pragma solidity <0.9.0;
 
 import {ERC20BL} from "mgv_src/toy/ERC20BL.sol";
 

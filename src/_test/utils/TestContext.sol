@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.10;
+pragma solidity >=0.8.10;
 
 import "forge-std/Test.sol";
 import "forge-std/StdJson.sol";
@@ -15,7 +15,7 @@ contract TestContext is Test {
     string public addressesJson;
     string public profile;
 
-    constructor() {
+    function setUp() public virtual {
         N = new ERC20Normalizer();
         addressesJson = vm.readFile("addresses.json");
         profile = vm.envString("FOUNDRY_PROFILE");
