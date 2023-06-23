@@ -9,12 +9,7 @@ order-book.
 1. Clone
 2. Run `npm install`
 3. [Install foundry](https://book.getfoundry.sh/getting-started/installation)
-4. Install and build for `0_7_6` profile
-   1. Run `export FOUNDRY_PROFILE=0_7_6`
-   2. Run `forge build`
-5. Install and build for `default` profile
-   1. Run `export FOUNDRY_PROFILE=default`
-   2. Run `forge build`
+4. Build/compile with `npm run build` (for the details, see `package.json`.) 
 
 ## How to use it
 
