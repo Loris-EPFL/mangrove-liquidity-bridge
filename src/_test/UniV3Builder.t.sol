@@ -31,7 +31,10 @@ contract UniV3BuilderTest is TestContext {
 
     function buildWithMockedTokens() public {
         base = new ERC20Mock("WBTC", 18);
-        quote = new ERC20Mock("USDC", 6);
+        vm.label(address(base), "WBTC");
+
+        quote = new ERC20Mock("USDC", 12);
+        vm.label(address(quote), "USDC");
 
         builder = new UniV3PoolBuilder(base, quote, 3000);
         assertTrue(
@@ -43,8 +46,8 @@ contract UniV3BuilderTest is TestContext {
             larry,
             ud(25_000e18),
             ud(100_000e18),
-            -600,
-            600
+            ud(23_000e18),
+            ud(27_000e18)
         );
         console2.log("amount0", amount0);
         console2.log("amount1", amount1);
@@ -68,6 +71,9 @@ contract UniV3BuilderTest is TestContext {
         // deal alice & approve
         deal(address(quote), alice, N.denormalize(quote, 10_000e18));
 
+        console2.log("alice base balance before swap", base.balanceOf(alice));
+        console2.log("alice quote balance before swap", quote.balanceOf(alice));
+
         vm.startPrank(alice);
         quote.approve(address(builder), type(uint256).max);
         vm.stopPrank();
@@ -77,11 +83,11 @@ contract UniV3BuilderTest is TestContext {
             builder.pool(),
             address(quote),
             address(base),
-            N.denormalize(quote, 10_000e18)
+            N.denormalize(quote, 1_000e18)
         );
 
-        console2.log("alice base balance", base.balanceOf(alice));
-        console2.log("alice quote balance", quote.balanceOf(alice));
+        console2.log("alice base balance after swap", base.balanceOf(alice));
+        console2.log("alice quote balance after swap", quote.balanceOf(alice));
     }
 
     function buildWithDeployedTokens() public {
@@ -98,8 +104,8 @@ contract UniV3BuilderTest is TestContext {
             larry,
             ud(25_000e18),
             ud(100_000e18),
-            -600,
-            600
+            ud(23_000e18),
+            ud(27_000e18)
         );
         console2.log("amount0", amount0);
         console2.log("amount1", amount1);

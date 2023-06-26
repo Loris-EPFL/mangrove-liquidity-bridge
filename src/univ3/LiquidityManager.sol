@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.10;
 
+import "forge-std/Test.sol";
 import {IERC20} from "mgv_src/MgvLib.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {LiquidityAmounts} from "./LiquidityAmounts.sol";
 import {TickMath} from "src/math/TickMath.sol";
 import {MathLib} from "src/math/MathLib.sol";
+import {Math64x64} from "src/math/Math64x64.sol";
+import {UD60x18, ud} from "@prb/math/UD60x18.sol";
+import {UniV3PriceLib} from "./UniV3PriceLib.sol";
 
 contract LiquidityManager {
     struct CallbackData {
@@ -33,6 +37,9 @@ contract LiquidityManager {
         uint amount0,
         uint amount1
     ) public returns (uint amountRes0, uint amountRes1, uint128 liquidity) {
+        console2.log("tickLeft", tickLeft);
+        console2.log("tickRight", tickRight);
+
         bytes memory data = abi.encode(
             CallbackData({
                 token0: pool.token0(),
@@ -50,7 +57,6 @@ contract LiquidityManager {
             amount0,
             amount1
         );
-
         (amountRes0, amountRes1) = pool.mint(
             larry,
             tickLeft,
@@ -58,6 +64,31 @@ contract LiquidityManager {
             liquidity,
             data
         );
+    }
+
+    function mint(
+        IUniswapV3Pool pool,
+        address larry,
+        IERC20 base,
+        IERC20 quote,
+        UD60x18 priceLower,
+        UD60x18 priceUpper,
+        uint amountBase,
+        uint amountQuote
+    ) public returns (uint amountRes0, uint amountRes1, uint128 liquidity) {
+        (int24 tickLower, int24 tickUpper) = UniV3PriceLib.GetTickRange(
+            pool,
+            base,
+            quote,
+            priceLower,
+            priceUpper
+        );
+
+        (uint amount0, uint amount1) = base < quote
+            ? (amountBase, amountQuote)
+            : (amountQuote, amountBase);
+
+        return mint(pool, larry, tickLower, tickUpper, amount0, amount1);
     }
 
     function uniswapV3SwapCallback(
@@ -90,7 +121,7 @@ contract LiquidityManager {
         address tokenIn,
         address tokenOut,
         uint amountIn
-    ) public {
+    ) public returns (uint amountOut) {
         bytes memory data = abi.encode(
             CallbackData({
                 token0: pool.token0(),
@@ -101,7 +132,7 @@ contract LiquidityManager {
 
         bool zeroForOne = tokenIn < tokenOut; // TokenIn TokenOut
 
-        pool.swap(
+        (int256 amount0, int256 amount1) = pool.swap(
             payer,
             zeroForOne,
             zeroForOne ? MathLib.toInt(amountIn) : -MathLib.toInt(amountIn),
@@ -110,5 +141,7 @@ contract LiquidityManager {
                 : TickMath.MAX_SQRT_RATIO - 1,
             data
         );
+
+        amountOut = uint256(zeroForOne ? amount1 : amount0);
     }
 }

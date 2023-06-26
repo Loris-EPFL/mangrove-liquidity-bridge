@@ -67,8 +67,8 @@ contract UniV3PoolBuilder is Test, LiquidityManager {
         address larry,
         UD60x18 currentPrice,
         UD60x18 quoteAmount,
-        int24 tickLower,
-        int24 tickUpper
+        UD60x18 priceLower,
+        UD60x18 priceUpper
     ) public returns (uint amount0, uint amount1) {
         UD60x18 tokenPrice;
 
@@ -79,44 +79,40 @@ contract UniV3PoolBuilder is Test, LiquidityManager {
             tokenPrice = ud(1e18).div(currentPrice);
         }
 
-        console2.log("UniV3PoolBuilder/initiateLiquidity/initializing pool");
+        console2.log(
+            "UniV3PoolBuilder/initiateLiquidity/initializing with tokenPrice:",
+            tokenPrice.unwrap()
+        );
         pool.initialize(MathLib.toQ96(tokenPrice.sqrt()));
 
         // deal tokens and approve for larry
-        UD60x18 baseAmount = quoteAmount.div(tokenPrice);
-        deal(
-            address(base),
-            larry,
-            N.denormalize(base, baseAmount.mul(ud(2e18)).unwrap())
-        );
-        deal(
-            address(quote),
-            larry,
-            N.denormalize(quote, quoteAmount.mul(ud(2e18)).unwrap())
-        );
+        UD60x18 baseAmount = quoteAmount.div(currentPrice);
+
+        uint baseAmountDenorm = N.denormalize(base, baseAmount.unwrap());
+        uint quoteAmountDenorm = N.denormalize(quote, quoteAmount.unwrap());
+
+        deal(address(base), larry, baseAmountDenorm * 2);
+        deal(address(quote), larry, quoteAmountDenorm * 2);
+        console2.log("Larry base balance", base.balanceOf(larry));
+        console2.log("Larry quote balance", quote.balanceOf(larry));
 
         vm.startPrank(larry);
         base.approve(address(this), type(uint256).max);
         quote.approve(address(this), type(uint256).max);
         vm.stopPrank();
 
-        uint token0Deposited = N.denormalize(
-            token0,
-            (baseIsToken0 ? baseAmount : quoteAmount).unwrap()
-        );
-        uint token1Deposited = N.denormalize(
-            token1,
-            (baseIsToken0 ? quoteAmount : baseAmount).unwrap()
-        );
-
         // mint liquidity
         (amount0, amount1, ) = mint(
             pool,
             larry,
-            tickLower,
-            tickUpper,
-            token0Deposited,
-            token1Deposited
+            base,
+            quote,
+            priceLower,
+            priceUpper,
+            baseAmountDenorm,
+            quoteAmountDenorm
         );
+        console2.log("UniV3PoolBuilder/initiateLiquidity/amount0", amount0);
+        console2.log("UniV3PoolBuilder/initiateLiquidity/amount1", amount1);
     }
 }

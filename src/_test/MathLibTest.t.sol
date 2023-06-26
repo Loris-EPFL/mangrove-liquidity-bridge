@@ -16,4 +16,14 @@ contract MathLibTest is Test {
         assertEq(ud1.unwrap(), ud2.unwrap());
         assertEq(x961, x962);
     }
+
+    function testX96ToUD() public pure {
+        uint160 q96 = 1376472036138390016289905182008;
+        UD60x18 ud1 = MathLib.toUD60x18(q96);
+        console2.log("DexUniV3Test/testX96TOUD/ud", ud1.unwrap());
+        console2.log(
+            "DexUniV3Test/testX96TOUD/ud^2",
+            ud1.pow(ud(2e18)).unwrap()
+        );
+    }
 }
