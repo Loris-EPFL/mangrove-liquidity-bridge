@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.10;
 
-import "forge-std/Test.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import "@prb/math/Common.sol";
 import {IERC20} from "mgv_src/MgvLib.sol";
@@ -39,7 +38,6 @@ library UniV3PriceLib {
         } else {
             denormFactor = ud(1e18).div(ud(10 ** (18 + decs0 - decs1)));
         }
-        console2.log("denormFactor", denormFactor.unwrap());
         sqrtPriceX96 = MathLib.toQ96(price.mul(denormFactor).sqrt());
     }
 
@@ -53,8 +51,6 @@ library UniV3PriceLib {
         uint8 decs0 = IERC20(pool.token0()).decimals();
         uint8 decs1 = IERC20(pool.token1()).decimals();
         int24 tickSpacing = pool.tickSpacing();
-        console2.log("decimals0", decs0);
-        console2.log("decimals1", decs1);
 
         bool baseIsToken0 = (base < quote);
         if (!baseIsToken0) {
@@ -62,8 +58,6 @@ library UniV3PriceLib {
             priceLower = ud(1e18).div(priceLower);
             priceUpper = ud(1e18).div(priceUpper);
         }
-        console2.log("priceLower", priceLower.unwrap());
-        console2.log("priceUpper", priceUpper.unwrap());
 
         uint160 sqrtPX96Lower = priceToSqrtQ96(priceLower, decs0, decs1);
         uint160 sqrtPX96Upper = priceToSqrtQ96(priceUpper, decs0, decs1);
