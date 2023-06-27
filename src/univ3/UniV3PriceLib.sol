@@ -28,13 +28,19 @@ library UniV3PriceLib {
         }
     }
 
-    function priceToTick(
+    function priceToSqrtQ96(
         UD60x18 price,
-        UD60x18 denormFactor
-    ) private pure returns (int24 tick) {
-        uint160 p96 = MathLib.toQ96(price.mul(denormFactor).sqrt());
-        console2.log("p96", MathLib.toUD60x18(p96).unwrap());
-        tick = TickMath.getTickAtSqrtRatio(p96);
+        uint8 decs0,
+        uint8 decs1
+    ) public pure returns (uint160 sqrtPriceX96) {
+        UD60x18 denormFactor;
+        if (decs0 < decs1) {
+            denormFactor = ud(10 ** (18 + decs1 - decs0));
+        } else {
+            denormFactor = ud(1e18).div(ud(10 ** (18 + decs0 - decs1)));
+        }
+        console2.log("denormFactor", denormFactor.unwrap());
+        sqrtPriceX96 = MathLib.toQ96(price.mul(denormFactor).sqrt());
     }
 
     function GetTickRange(
@@ -59,20 +65,13 @@ library UniV3PriceLib {
         console2.log("priceLower", priceLower.unwrap());
         console2.log("priceUpper", priceUpper.unwrap());
 
-        UD60x18 denormFactor;
+        uint160 sqrtPX96Lower = priceToSqrtQ96(priceLower, decs0, decs1);
+        uint160 sqrtPX96Upper = priceToSqrtQ96(priceUpper, decs0, decs1);
 
-        // TODO document this step
-        if (decs0 > decs1) {
-            denormFactor = ud(10 ** (decs0 - decs1 + 18));
-        } else {
-            denormFactor = ud(1e18) / ud(10 ** (decs1 - decs0 + 18));
-        }
-        console2.log("denormFactor", denormFactor.unwrap());
-
-        tickLower = priceToTick(priceLower, denormFactor);
+        tickLower = TickMath.getTickAtSqrtRatio(sqrtPX96Lower);
         tickLower = nearestUsableTick(tickLower, tickSpacing);
 
-        tickUpper = priceToTick(priceUpper, denormFactor);
+        tickUpper = TickMath.getTickAtSqrtRatio(sqrtPX96Upper);
         tickUpper = nearestUsableTick(tickUpper, tickSpacing);
     }
 }

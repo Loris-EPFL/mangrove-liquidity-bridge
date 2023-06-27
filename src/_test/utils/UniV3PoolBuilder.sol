@@ -11,14 +11,15 @@ import {TickMath} from "src/math/TickMath.sol";
 import {LiquidityManager} from "src/univ3/LiquidityManager.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
+import {UniV3PriceLib} from "src/univ3/UniV3PriceLib.sol";
 
 contract UniV3PoolBuilder is Test, LiquidityManager {
-    IERC20 base;
-    IERC20 quote;
+    IERC20 immutable base;
+    IERC20 immutable quote;
     bool baseIsToken0;
 
-    IERC20 token0;
-    IERC20 token1;
+    IERC20 immutable token0;
+    IERC20 immutable token1;
 
     uint24 fee;
 
@@ -83,7 +84,17 @@ contract UniV3PoolBuilder is Test, LiquidityManager {
             "UniV3PoolBuilder/initiateLiquidity/initializing with tokenPrice:",
             tokenPrice.unwrap()
         );
-        pool.initialize(MathLib.toQ96(tokenPrice.sqrt()));
+        uint160 sqrtPriceX96 = UniV3PriceLib.priceToSqrtQ96(
+            tokenPrice,
+            token0.decimals(),
+            token1.decimals()
+        );
+
+        console2.log(
+            "UniV3PoolBuilder/initiateLiquidity/initializing with sqrtPriceX96:",
+            sqrtPriceX96
+        );
+        pool.initialize(sqrtPriceX96);
 
         // deal tokens and approve for larry
         UD60x18 baseAmount = quoteAmount.div(currentPrice);

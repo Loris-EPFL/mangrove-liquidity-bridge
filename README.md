@@ -9,7 +9,7 @@ order-book.
 1. Clone
 2. Run `npm install`
 3. [Install foundry](https://book.getfoundry.sh/getting-started/installation)
-4. Build/compile with `npm run build` (for the details, see `package.json`.) 
+4. Build/compile with `npm run build` (for the details, see `package.json`.)
 
 ## How to use it
 
@@ -20,19 +20,18 @@ order-book.
 
 ## Notes
 
-(IN HEAVILY PROGRESS) The current repos does not allow to test the full bridge
-logic on the same chain because :
-
-- on polygon : we don't have a Mangrove order-book deployed
-- on mumbai : ~~we don't have a Uniswap pool deployed~~
+- ✅ All tests are OK on `mumbai` (i.e. `FOUNDRY_PROFILE=mumbai`), including a
+  bridge from a newly deployed Uniswap pool V3
 
 ## Next steps
 
-- Finer estimation of require gas at contract creation (`LiquidityBridge`)
-- Better specification for `askPivot` and `bidPivot` (when creating/refreshing
+- Better estimation of require gas at contract creation (`LiquidityBridge`)
+  - Put this required gas into the constructor of the bridge
   orders)?
+- Implement the dex logic into the Routing logic to avoid the non modularity
+  coming from the gasreq at construction
 - What about creating an Abritageur Role (in addition to the Admin role)?
 - Implement a faster reneg (for DexUniV3)
 - Implement a **tenacity** behavior (taking reneg cost into acount and avoid
   certain renegs when more expensive than bridging)
-- Add convenient functions to TestContext (check MangroveTest before)
+- Replace TestContext by MangroveTest

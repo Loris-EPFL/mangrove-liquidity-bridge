@@ -35,7 +35,7 @@ contract LiquidityBridge is Direct {
         UD60x18 spreadRatio_,
         address dexLogic,
         address admin
-    ) Direct(mgv, NO_ROUTER, 200_000, admin) {
+    ) Direct(mgv, NO_ROUTER, 400_000, admin) {
         // SimpleRouter takes promised liquidity from admin's address (wallet)
         BASE = base;
         QUOTE = quote;

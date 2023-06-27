@@ -43,19 +43,16 @@ contract DexUniV3Test is TestContext {
     function setDex() private {
         console2.log("DexUniV3Test/setUp/profile", profile);
 
-        address swapRouteur = loadAddress("UNIV3_ROUTER");
-        vm.label(swapRouteur, "UniV3-routeur");
-
         builder = new UniV3PoolBuilder(base, quote, fee);
         require(address(builder.pool()) != address(0), "Pool address is not 0");
 
-        dex = new DexUniV3(swapRouteur, address(builder.pool()));
+        dex = new DexUniV3(address(builder.pool()));
         console2.log(
             "DexUniV3Test/setUp/baseIsToken0",
             address(base) < address(quote)
         );
 
-        (uint amount0, uint amount1) = builder.initiateLiquidity(
+        builder.initiateLiquidity(
             larry,
             ud(25_000e18),
             ud(100_000e18),
@@ -64,21 +61,7 @@ contract DexUniV3Test is TestContext {
         );
     }
 
-    //    function testWBTC_USD_midPrice_above_10_000() public {
-    //base = loadToken("WBTC");
-    //quote = loadToken("USDT");
-    //setDex(3000);
-    //checkOrCreatePool(ud(20000e18), ud(1e24));
-
-    //UD60x18 midPrice = dex.currentPrice(address(base), address(quote));
-    //console2.log(
-    //"DexUniV3Test/testGetMidPrice/midPrice",
-    //midPrice.unwrap() / 1e13
-    //);
-    //assertGt(midPrice.unwrap(), ud(10000).unwrap());
-    //}
-
-    function testUSDC_WBTC_midPrice_below_1() public {
+    function testInitPoolWBTCUSDT() public {
         setDex();
 
         base = loadToken("USDC");
@@ -88,7 +71,8 @@ contract DexUniV3Test is TestContext {
             "DexUniV3Test/testGetMidPrice/midPrice",
             midPrice.unwrap()
         );
-        assertLt(midPrice.unwrap(), ud(1e18).unwrap());
+        assertLt(midPrice.unwrap(), ud(30_000e18).unwrap());
+        assertGt(midPrice.unwrap(), ud(20_000e18).unwrap());
     }
 
     function testSellWBTC() public {
@@ -103,5 +87,7 @@ contract DexUniV3Test is TestContext {
         base.approve(address(dex), type(uint256).max);
         vm.prank(alice);
         dex.swap(address(base), address(quote), amount, ud(0));
+
+        console2.log("Alice quote balance", quote.balanceOf(alice));
     }
 }

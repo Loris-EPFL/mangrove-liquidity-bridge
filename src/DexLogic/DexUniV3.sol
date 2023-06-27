@@ -12,15 +12,10 @@ import {LiquidityManager} from "src/univ3/LiquidityManager.sol";
 import {MathLib} from "src/math/MathLib.sol";
 
 contract DexUniV3 is LiquidityManager, IDexLogic, AccessControlled {
-    ISwapRouter private swapRouter;
     IUniswapV3Pool private pool;
     ERC20Normalizer private immutable N;
 
-    constructor(
-        address swapRouter_,
-        address pool_
-    ) AccessControlled(msg.sender) {
-        swapRouter = ISwapRouter(swapRouter_);
+    constructor(address pool_) AccessControlled(msg.sender) {
         pool = IUniswapV3Pool(pool_);
         N = new ERC20Normalizer();
 
@@ -66,7 +61,6 @@ contract DexUniV3 is LiquidityManager, IDexLogic, AccessControlled {
         );
 
         amount_out = ud(N.normalize(IERC20(token_out), amount));
-
         require(amount_out >= amount_out_min, "DexUniV3/swap/fail/slippage");
 
         //        IERC20(token_in).transferFrom(

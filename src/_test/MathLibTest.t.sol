@@ -18,7 +18,7 @@ contract MathLibTest is Test {
     }
 
     function testX96ToUD() public pure {
-        uint160 q96 = 1376472036138390016289905182008;
+        uint160 q96 = 5010828967500958573024005271;
         UD60x18 ud1 = MathLib.toUD60x18(q96);
         console2.log("DexUniV3Test/testX96TOUD/ud", ud1.unwrap());
         console2.log(

@@ -135,13 +135,15 @@ contract LiquidityManager {
         (int256 amount0, int256 amount1) = pool.swap(
             payer,
             zeroForOne,
-            zeroForOne ? MathLib.toInt(amountIn) : -MathLib.toInt(amountIn),
+            MathLib.toInt(amountIn),
             zeroForOne
                 ? TickMath.MIN_SQRT_RATIO + 1
                 : TickMath.MAX_SQRT_RATIO - 1,
             data
         );
-
-        amountOut = uint256(zeroForOne ? amount1 : amount0);
+        // the output of swap represents the delta of the pool
+        // we need to return the opposite of that to represent
+        // the delta of the user
+        amountOut = uint256(zeroForOne ? -amount1 : -amount0);
     }
 }
