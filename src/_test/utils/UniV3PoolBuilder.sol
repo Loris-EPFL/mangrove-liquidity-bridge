@@ -11,15 +11,14 @@ import {TickMath} from "src/math/TickMath.sol";
 import {LiquidityManager} from "src/univ3/LiquidityManager.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
-import {UniV3PriceLib} from "src/univ3/UniV3PriceLib.sol";
 
 contract UniV3PoolBuilder is Test, LiquidityManager {
-    IERC20 immutable base;
-    IERC20 immutable quote;
+    IERC20 base;
+    IERC20 quote;
     bool baseIsToken0;
 
-    IERC20 immutable token0;
-    IERC20 immutable token1;
+    IERC20 token0;
+    IERC20 token1;
 
     uint24 fee;
 
@@ -46,16 +45,27 @@ contract UniV3PoolBuilder is Test, LiquidityManager {
     function createPool() internal {
         // factory is loaded from previously deployed contract
         // (see src-0_7_6/build_to_deploy_artefact.sol)
+
         factory = IUniswapV3Factory(
-            deployCode("UniswapV3Factory.sol:UniswapV3Factory")
+            //deployCode("UniswapV3Factory.sol:UniswapV3Factory")
+            address(0x1F98431c8aD98523631AE4a59f267346ea31F984)
         );
         vm.label(address(factory), "UniV3-factory");
 
-        address poolAddress = factory.createPool(
+        // get or create pool
+        address poolAddress = factory.getPool(
             address(token0),
             address(token1),
             fee
         );
+
+        if (poolAddress == address(0)) {
+            poolAddress = factory.createPool(
+                address(token0),
+                address(token1),
+                fee
+            );
+        }
 
         vm.label(
             poolAddress,
@@ -80,21 +90,19 @@ contract UniV3PoolBuilder is Test, LiquidityManager {
             tokenPrice = ud(1e18).div(currentPrice);
         }
 
-        console2.log(
-            "UniV3PoolBuilder/initiateLiquidity/initializing with tokenPrice:",
-            tokenPrice.unwrap()
-        );
-        uint160 sqrtPriceX96 = UniV3PriceLib.priceToSqrtQ96(
-            tokenPrice,
-            token0.decimals(),
-            token1.decimals()
-        );
-
-        console2.log(
-            "UniV3PoolBuilder/initiateLiquidity/initializing with sqrtPriceX96:",
-            sqrtPriceX96
-        );
-        pool.initialize(sqrtPriceX96);
+        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
+        if (sqrtPriceX96 == 0) {
+            console2.log(
+                "UniV3PoolBuilder/initiateLiquidity/initializing with tokenPrice:",
+                tokenPrice.unwrap()
+            );
+            pool.initialize(MathLib.toQ96(tokenPrice.sqrt()));
+        } else {
+            console2.log(
+                "UniV3PoolBuilder/initiateLiquidity/already initialized",
+                MathLib.toUD60x18(sqrtPriceX96).pow(ud(2e18)).unwrap()
+            );
+        }
 
         // deal tokens and approve for larry
         UD60x18 baseAmount = quoteAmount.div(currentPrice);
