@@ -11,9 +11,6 @@ import {ERC20Mock} from "./mock/ERC20Mock.sol";
 import {MathLib} from "src/math/MathLib.sol";
 
 contract UniV3BuilderTest is TestContext {
-    address alice;
-    address larry; // liquidity provider
-
     IERC20 base;
     IERC20 quote;
 
@@ -21,12 +18,6 @@ contract UniV3BuilderTest is TestContext {
 
     function setUp() public override {
         super.setUp();
-
-        alice = address(1111);
-        vm.label(alice, "alice");
-
-        larry = address(2222);
-        vm.label(larry, "larry");
     }
 
     function buildWithMockedTokens() public {

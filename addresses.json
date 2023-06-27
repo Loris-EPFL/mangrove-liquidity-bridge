@@ -2,6 +2,9 @@
   "MANGROVE": {
     "mumbai": "0xd1805f6Fe12aFF69D4264aE3e49ef320895e2D8b"
   },
+  "UNISWAP_FACTORY": {
+    "polygon": "0x1F98431c8aD98523631AE4a59f267346ea31F984"
+  },
   "MGV_ORACLE": {
     "mumbai": "0x8F8ff080cA0554b02BFC36A5aD465954416271eF"
   },

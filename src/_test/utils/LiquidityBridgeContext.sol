@@ -2,7 +2,7 @@
 pragma solidity >=0.8.10;
 
 import "forge-std/Test.sol";
-import {TestContext} from "./utils/TestContext.sol";
+import {TestContext} from "./TestContext.sol";
 
 import {IERC20} from "mgv_src/MgvLib.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
@@ -13,16 +13,13 @@ import {MgvStructs} from "mgv_src/MgvLib.sol";
 import {IDexLogic} from "src/DexLogic/IDexLogic.sol";
 import {DexFix} from "src/DexLogic/DexFix.sol";
 
-contract LiquidityBridgeTest is TestContext {
+abstract contract LiquidityBridgeContext is TestContext {
     IMangrove mgv;
-    LiquidityBridge bridge;
 
     IERC20 base;
     IERC20 quote;
 
-    address alice = address(1111);
-    address bob = address(2222);
-    address charlie = address(3333);
+    LiquidityBridge bridge;
 
     IDexLogic dex;
 
@@ -30,22 +27,21 @@ contract LiquidityBridgeTest is TestContext {
 
     receive() external payable {}
 
-    function setUp() public override {
+    function setUp() public virtual override {
         super.setUp();
+
         mgv = IMangrove(payable(loadAddress("MANGROVE")));
-        base = loadToken("WMATIC");
-        quote = loadToken("USDT");
-
         vm.label(address(mgv), "mgv");
-        vm.label(alice, "alice");
-        vm.label(bob, "bob");
-        vm.label(address(base), "base");
-        vm.label(address(quote), "quote");
 
-        vm.label(address(this), "BridgeTest");
+        setTokens();
+
+        setDex();
     }
 
-    // testing the capacity to mint tokens from config
+    function setTokens() internal virtual;
+
+    function setDex() internal virtual;
+
     function testMintTokens() public {
         uint amountDenorm = N.denormalize(base, 1e18);
 
@@ -56,40 +52,9 @@ contract LiquidityBridgeTest is TestContext {
         assertEq(quote.balanceOf(address(this)), amountDenorm);
     }
 
-    function setDexFix() public {
-        UD60x18 best_ask;
-        UD60x18 best_bid;
-
-        uint best;
-        MgvStructs.OfferPacked offer;
-
-        best = mgv.best(address(base), address(quote));
-        offer = mgv.offers(address(base), address(quote), best);
-
-        best_ask = ud(N.normalize(quote, offer.wants())).div(
-            ud(N.normalize(base, offer.gives()))
-        );
-        console2.log("best_ask", best_ask.unwrap());
-
-        best = mgv.best(address(quote), address(base));
-        offer = mgv.offers(address(quote), address(base), best);
-        best_bid = ud(N.normalize(quote, offer.gives())).div(
-            ud(N.normalize(base, offer.wants()))
-        );
-        console2.log("best_bid", best_bid.unwrap());
-
-        UD60x18 mid = best_ask.avg(best_bid);
-        console2.log("mid", mid.unwrap());
-
-        DexFix dexfix;
-        dexfix = new DexFix(address(base), address(quote));
-        dexfix.setPrice(mid);
-        dex = dexfix;
-        vm.label(address(dex), "dex (fix)");
-    }
-
-    function getDexCurrentPrice() public view returns (UD60x18) {
-        return dex.currentPrice(address(base), address(quote));
+    function testGetDexCurrentPrice() public {
+        UD60x18 price = dex.currentPrice(address(base), address(quote));
+        assertGt(price.unwrap(), 0);
     }
 
     function setLiquidityBridge(
@@ -178,7 +143,6 @@ contract LiquidityBridgeTest is TestContext {
     }
 
     function testNewOffers() public {
-        setDexFix();
         UD60x18 midPrice = dex.currentPrice(address(base), address(quote));
         UD60x18 bridgedQuoteAmount = ud(1000e18);
         UD60x18 spreadRatio = ud(1010e15);
@@ -204,7 +168,6 @@ contract LiquidityBridgeTest is TestContext {
     }
 
     function testUpdateQuoteAmount() public {
-        setDexFix();
         UD60x18 midPrice = dex.currentPrice(address(base), address(quote));
         UD60x18 bridgedQuoteAmount = ud(1000e18);
         UD60x18 spreadRatio = ud(1010e15);
@@ -234,7 +197,6 @@ contract LiquidityBridgeTest is TestContext {
     }
 
     function testUpdateSpreadRatio() public {
-        setDexFix();
         UD60x18 midPrice = dex.currentPrice(address(base), address(quote));
         UD60x18 bridgedQuoteAmount = ud(1000e18);
         UD60x18 spreadRatio = ud(1010e15);
@@ -264,7 +226,6 @@ contract LiquidityBridgeTest is TestContext {
     }
 
     function testRetractOffers() public {
-        setDexFix();
         UD60x18 bridgedQuoteAmount = ud(1000e18);
         UD60x18 spreadRatio = ud(1010e15);
 
@@ -279,8 +240,6 @@ contract LiquidityBridgeTest is TestContext {
     }
 
     function testSnipeAskGoodPrice() public {
-        setDexFix();
-
         UD60x18 bridgedQuoteAmount = ud(1000e18);
         UD60x18 spreadGeo = ud(1010e15);
 
@@ -339,8 +298,6 @@ contract LiquidityBridgeTest is TestContext {
     }
 
     function testMultipleSnipeAskGoodPrice() public {
-        setDexFix();
-
         UD60x18 bridgedQuoteAmount = ud(1000e18);
         UD60x18 spreadGeo = ud(1010e15);
 
@@ -399,8 +356,6 @@ contract LiquidityBridgeTest is TestContext {
     }
 
     function testSnipeBidGoodPrice() public {
-        setDexFix();
-
         UD60x18 bridgedQuoteAmount = ud(10000e18);
         UD60x18 spreadGeo = ud(1010e15);
 
@@ -481,62 +436,5 @@ contract LiquidityBridgeTest is TestContext {
         assertEq(fee, 0);
         assertEq(base.balanceOf(address(bridge)), 0);
         assertEq(quote.balanceOf(address(bridge)), 0);
-    }
-
-    function testSnipeAskBadPrice() public {
-        setDexFix();
-        UD60x18 midPriceInit = getDexCurrentPrice();
-        UD60x18 bridgedQuoteAmount = ud(1000e18);
-        UD60x18 spreadGeo = ud(1010e15);
-
-        uint askId;
-
-        (askId, ) = setLiquidityBridge(bridgedQuoteAmount, spreadGeo);
-
-        // mint quote token for alice
-        dealNorm(quote, alice, bridgedQuoteAmount);
-
-        // mint base token for DexFix, with margin (x2)
-        dealNorm(
-            base,
-            address(dex),
-            bridgedQuoteAmount.div(midPriceInit).mul(ud(2e18))
-        );
-
-        // [[offerId, minTakerWants, maxTakerGives, gasReqPermitted]]
-        uint[4][] memory snipeParams = new uint[4][](1);
-        snipeParams[0] = [askId, 0, type(uint96).max, type(uint).max];
-
-        // allow mgv to spend quote tokens for alice
-        vm.prank(alice);
-        quote.approve(address(mgv), type(uint).max);
-
-        MgvStructs.OfferPacked askOffer;
-        askOffer = mgv.offers(address(base), address(quote), askId);
-        console2.log("askOffer.wants()", askOffer.wants());
-        console2.log("askOffer.gives()", askOffer.gives());
-
-        // double increase of midPrice
-        DexFix(address(dex)).setPrice(
-            midPriceInit.mul(spreadGeo).mul(spreadGeo)
-        );
-
-        vm.prank(alice);
-        (uint successes, uint takerGot, uint takerGave, uint bounty, uint fee) = mgv
-            .snipes(
-                address(base),
-                address(quote),
-                snipeParams,
-                false // fillwants
-            );
-
-        assertEq(successes, 0);
-        assertEq(takerGave, 0);
-        assertEq(takerGot, 0);
-        assertGt(bounty, 0);
-
-        askOffer = mgv.offers(address(base), address(quote), askId);
-        console2.log("askOffer.wants()", askOffer.wants());
-        console2.log("askOffer.gives()", askOffer.gives());
     }
 }

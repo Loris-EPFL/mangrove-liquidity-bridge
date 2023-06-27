@@ -15,10 +15,27 @@ contract TestContext is Test {
     string public addressesJson;
     string public profile;
 
+    address alice;
+    address bob;
+    address carol;
+    address larry;
+
     function setUp() public virtual {
         N = new ERC20Normalizer();
         addressesJson = vm.readFile("addresses.json");
         profile = vm.envString("FOUNDRY_PROFILE");
+
+        alice = address(0x1);
+        vm.label(alice, "alice");
+
+        bob = address(0x2);
+        vm.label(bob, "bob");
+
+        carol = address(0x3);
+        vm.label(carol, "carol");
+
+        larry = address(0x4);
+        vm.label(larry, "larry");
     }
 
     function dealNorm(IERC20 token, address to, UD60x18 amount) internal {

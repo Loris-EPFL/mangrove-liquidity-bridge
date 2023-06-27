@@ -21,17 +21,9 @@ contract DexUniV3Test is TestContext {
     IERC20 quote;
     uint24 fee;
     UniV3PoolBuilder builder;
-    address alice;
-    address larry; // larry is the liquidity provider
 
     function setUp() public override {
         super.setUp();
-
-        alice = address(1111);
-        vm.label(alice, "alice");
-
-        larry = address(2222);
-        vm.label(larry, "larry");
 
         fee = 3000;
 
