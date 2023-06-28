@@ -4,14 +4,14 @@ This repo exposes a liquidity bridge logic (`LiquidityBridge.sol`), from an
 on-chain exchange (`IDexLogic.sol`), typically a Uniswap pool, to a mangrovian
 order-book.
 
-## Installation
+## 🔨 Installation
 
 1. Clone
 2. Run `npm install`
 3. [Install foundry](https://book.getfoundry.sh/getting-started/installation)
 4. Build/compile with `npm run build` (for the details, see `package.json`.)
 
-## How to use it
+## 🎹 How to use it
 
 1. Provide/Create an `.env` file following `.envdist` format
 2. Specify the chain to test (polygon or mumbai) by setting `FOUNDRY_PROFILE` to `polygon` or `mumbai`
@@ -21,9 +21,11 @@ order-book.
 ## Notes
 
 - ✅ All tests are OK on `mumbai` (i.e. `FOUNDRY_PROFILE=mumbai`), including a
-  bridge from a newly deployed Uniswap pool V3
+  bridge from a UniswapV3 pool to a Mangrove order-book.
+- 🔴 On Polygon, because the repo is still expecting an already deployed
+  Mangrove OB, some tests are failing.
 
-## Next steps
+## 📆 Next steps
 
 - Better estimation of require gas at contract creation (`LiquidityBridge`)
   - Put this required gas into the constructor of the bridge

@@ -11,6 +11,7 @@ import {Math64x64} from "src/math/Math64x64.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import {UniV3PriceLib} from "./UniV3PriceLib.sol";
 
+/// @notice Helper contract to mint and swap on Uniswap V3
 contract LiquidityManager {
     struct CallbackData {
         address token0;

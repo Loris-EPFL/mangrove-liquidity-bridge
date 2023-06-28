@@ -16,9 +16,7 @@ contract UniV3BuilderTest is TestContext {
 
     UniV3PoolBuilder builder;
 
-    function setUp() public override {
-        super.setUp();
-    }
+    function setUp() public {}
 
     function buildWithMockedTokens() public {
         base = new ERC20Mock("WBTC", 18);

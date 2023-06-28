@@ -27,9 +27,7 @@ abstract contract LiquidityBridgeContext is TestContext {
 
     receive() external payable {}
 
-    function setUp() public virtual override {
-        super.setUp();
-
+    function setUp() public virtual {
         mgv = IMangrove(payable(loadAddress("MANGROVE")));
         vm.label(address(mgv), "mgv");
 

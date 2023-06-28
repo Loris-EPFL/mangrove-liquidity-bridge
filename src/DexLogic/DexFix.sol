@@ -22,6 +22,7 @@ contract DexFix is IDexLogic {
         PRICE = price;
     }
 
+    /// @notice See IDexLogic
     function currentPrice(
         address base,
         address quote
@@ -35,6 +36,7 @@ contract DexFix is IDexLogic {
         }
     }
 
+    /// @notice See IDexLogic
     function swap(
         address token_in,
         address token_out,
