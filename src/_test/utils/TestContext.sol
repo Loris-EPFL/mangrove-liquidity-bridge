@@ -20,7 +20,7 @@ contract TestContext is Test {
     address carol;
     address larry;
 
-    function setUp() public virtual {
+    constructor() {
         N = new ERC20Normalizer();
         addressesJson = vm.readFile("addresses.json");
         profile = vm.envString("FOUNDRY_PROFILE");

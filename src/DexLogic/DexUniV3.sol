@@ -3,16 +3,15 @@ pragma solidity >=0.8.10;
 
 import {IERC20} from "mgv_src/MgvLib.sol";
 import {IDexLogic} from "./IDexLogic.sol";
-import {UD60x18, ud} from "@prb/math/UD60x18.sol";
-import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {LiquidityManager} from "src/univ3/LiquidityManager.sol";
+import {UD60x18, ud} from "@prb/math/UD60x18.sol";
+import {MathLib} from "src/math/MathLib.sol";
 import {AccessControlled} from "mgv_src/strategies/utils/AccessControlled.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
-import {LiquidityManager} from "src/univ3/LiquidityManager.sol";
-import {MathLib} from "src/math/MathLib.sol";
 
 contract DexUniV3 is LiquidityManager, IDexLogic, AccessControlled {
-    IUniswapV3Pool private pool;
+    IUniswapV3Pool private immutable pool;
     ERC20Normalizer private immutable N;
 
     constructor(address pool_) AccessControlled(msg.sender) {
@@ -24,6 +23,8 @@ contract DexUniV3 is LiquidityManager, IDexLogic, AccessControlled {
     }
 
     /// @notice required by IDexLogic
+    /// Transforms the sqrtPriceX96 to a price of 1 unit of base expressed in terms of unit of quotes
+    /// Acts as a double denormalization (w.r.t. decimals) and ^2
     function currentPrice(
         address base,
         address quote
@@ -40,7 +41,7 @@ contract DexUniV3 is LiquidityManager, IDexLogic, AccessControlled {
         } else {
             price = (sqrtPx * sqrtPx) / ud(10 ** (decs1 - decs0 + 18));
         }
-        if (base != pool.token0()) {
+        if (address(quote) < address(base)) {
             price = ud(1e18) / price;
         }
     }
@@ -62,32 +63,5 @@ contract DexUniV3 is LiquidityManager, IDexLogic, AccessControlled {
 
         amount_out = ud(N.normalize(IERC20(token_out), amount));
         require(amount_out >= amount_out_min, "DexUniV3/swap/fail/slippage");
-
-        //        IERC20(token_in).transferFrom(
-        //msg.sender,
-        //address(this),
-        //N.denormalize(IERC20(token_in), amount_in.unwrap())
-        //);
-
-        //IERC20(token_in).approve(address(swapRouter), type(uint256).max);
-
-        //// We also set the sqrtPriceLimitx96 to be 0 to ensure we swap our exact input amount.
-        //ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
-        //.ExactInputSingleParams({
-        //tokenIn: token_in,
-        //tokenOut: token_out,
-        //fee: fee,
-        //recipient: msg.sender,
-        //deadline: block.timestamp,
-        //amountIn: N.denormalize(IERC20(token_in), amount_in.unwrap()),
-        //amountOutMinimum: N.denormalize(
-        //IERC20(token_out),
-        //amount_out_min.unwrap()
-        //),
-        //sqrtPriceLimitX96: 0
-        //});
-
-        //// The call to `exactInputSingle` executes the swap.
-        //amount_out = ud(swapRouter.exactInputSingle(params));
     }
 }

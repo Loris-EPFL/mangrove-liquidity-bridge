@@ -22,9 +22,7 @@ contract DexUniV3Test is TestContext {
     uint24 fee;
     UniV3PoolBuilder builder;
 
-    function setUp() public override {
-        super.setUp();
-
+    function setUp() public {
         fee = 3000;
 
         base = loadToken("WBTC");
@@ -32,19 +30,15 @@ contract DexUniV3Test is TestContext {
         quote = loadToken("USDT");
     }
 
-    function setDex() private {
+    function setDex() private returns (uint amount0, uint amount1) {
         console2.log("DexUniV3Test/setUp/profile", profile);
 
         builder = new UniV3PoolBuilder(base, quote, fee);
         require(address(builder.pool()) != address(0), "Pool address is not 0");
 
         dex = new DexUniV3(address(builder.pool()));
-        console2.log(
-            "DexUniV3Test/setUp/baseIsToken0",
-            address(base) < address(quote)
-        );
 
-        builder.initiateLiquidity(
+        (amount0, amount1) = builder.initiateLiquidity(
             larry,
             ud(25_000e18),
             ud(100_000e18),
@@ -54,17 +48,15 @@ contract DexUniV3Test is TestContext {
     }
 
     function testInitPoolWBTCUSDT() public {
-        setDex();
+        (uint amount0, uint amount1) = setDex();
+        assertGt(amount0, 0, "Liquidity amount0 is 0");
+        assertGt(amount1, 0, "Liquidity amount1 is 0");
 
-        base = loadToken("USDC");
-        quote = loadToken("WBTC");
-        UD60x18 midPrice = dex.currentPrice(address(base), address(quote));
-        console2.log(
-            "DexUniV3Test/testGetMidPrice/midPrice",
-            midPrice.unwrap()
-        );
-        assertLt(midPrice.unwrap(), ud(30_000e18).unwrap());
-        assertGt(midPrice.unwrap(), ud(20_000e18).unwrap());
+        UD60x18 currentPrice = dex.currentPrice(address(base), address(quote));
+        console2.log("currentPrice", currentPrice.unwrap());
+
+        assertLt(currentPrice.unwrap(), ud(30_000e18).unwrap());
+        assertGt(currentPrice.unwrap(), ud(20_000e18).unwrap());
     }
 
     function testSellWBTC() public {
@@ -77,9 +69,9 @@ contract DexUniV3Test is TestContext {
         vm.prank(alice);
         //base.approve(address(dex), N.denormalize(base, amount.unwrap()));
         base.approve(address(dex), type(uint256).max);
+        console2.log("Alice quote balance before", quote.balanceOf(alice));
         vm.prank(alice);
         dex.swap(address(base), address(quote), amount, ud(0));
-
-        console2.log("Alice quote balance", quote.balanceOf(alice));
+        console2.log("Alice quote balance after", quote.balanceOf(alice));
     }
 }

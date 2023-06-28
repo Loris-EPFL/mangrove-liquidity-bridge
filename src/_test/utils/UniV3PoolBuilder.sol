@@ -13,20 +13,18 @@ import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 import {UniV3PriceLib} from "src/univ3/UniV3PriceLib.sol";
 
-contract UniV3PoolBuilder is Test, LiquidityManager {
-    IERC20 immutable base;
-    IERC20 immutable quote;
+contract UniV3PoolBuilder is TestContext, LiquidityManager {
+    IERC20 base;
+    IERC20 quote;
     bool baseIsToken0;
 
-    IERC20 immutable token0;
-    IERC20 immutable token1;
+    IERC20 token0;
+    IERC20 token1;
 
     uint24 fee;
 
     IUniswapV3Factory public factory;
     IUniswapV3Pool public pool;
-
-    ERC20Normalizer N;
 
     constructor(IERC20 base_, IERC20 quote_, uint24 fee_) {
         N = new ERC20Normalizer();
@@ -36,26 +34,55 @@ contract UniV3PoolBuilder is Test, LiquidityManager {
         fee = fee_;
 
         baseIsToken0 = base < quote;
+        console2.log("UniV3PoolBuilder/constructor/baseIsToken0", baseIsToken0);
 
         token0 = baseIsToken0 ? base : quote;
         token1 = baseIsToken0 ? quote : base;
+        console2.log("UniV3PoolBuilder/constructor/decs0", token0.decimals());
+        console2.log("UniV3PoolBuilder/constructor/decs1", token1.decimals());
 
         createPool();
     }
 
     function createPool() internal {
-        // factory is loaded from previously deployed contract
-        // (see src-0_7_6/build_to_deploy_artefact.sol)
-        factory = IUniswapV3Factory(
-            deployCode("UniswapV3Factory.sol:UniswapV3Factory")
-        );
-        vm.label(address(factory), "UniV3-factory");
+        // get or create factory
+        factory = IUniswapV3Factory(loadAddress("UNIV3_FACTORY"));
+        if (address(factory) == address(0)) {
+            console2.log("UniV3PoolBuilder/createPool/creating factory");
 
-        address poolAddress = factory.createPool(
+            // factory is loaded from previously deployed contract
+            // (see src-0_7_6/build_to_deploy_artefact.sol)
+            factory = IUniswapV3Factory(
+                deployCode("UniswapV3Factory.sol:UniswapV3Factory")
+            );
+            vm.label(address(factory), "UNIV3_FACTORY_NEW");
+        } else {
+            console2.log(
+                "UniV3PoolBuilder/createPool/factory exists",
+                address(factory)
+            );
+        }
+
+        // get or create pool
+        address poolAddress = factory.getPool(
             address(token0),
             address(token1),
             fee
         );
+
+        if (poolAddress == address(0)) {
+            console2.log("UniV3PoolBuilder/createPool/creating pool");
+            poolAddress = factory.createPool(
+                address(token0),
+                address(token1),
+                fee
+            );
+        } else {
+            console2.log(
+                "UniV3PoolBuilder/createPool/pool already exists",
+                poolAddress
+            );
+        }
 
         vm.label(
             poolAddress,
@@ -80,21 +107,26 @@ contract UniV3PoolBuilder is Test, LiquidityManager {
             tokenPrice = ud(1e18).div(currentPrice);
         }
 
-        console2.log(
-            "UniV3PoolBuilder/initiateLiquidity/initializing with tokenPrice:",
-            tokenPrice.unwrap()
-        );
-        uint160 sqrtPriceX96 = UniV3PriceLib.priceToSqrtQ96(
-            tokenPrice,
-            token0.decimals(),
-            token1.decimals()
-        );
-
-        console2.log(
-            "UniV3PoolBuilder/initiateLiquidity/initializing with sqrtPriceX96:",
-            sqrtPriceX96
-        );
-        pool.initialize(sqrtPriceX96);
+        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
+        if (sqrtPriceX96 == 0) {
+            console2.log(
+                "UniV3PoolBuilder/initiateLiquidity/with tokenPrice:",
+                tokenPrice.unwrap()
+            );
+            // transforms price to sqrtPriceX96, acting like
+            // a double deNormalisation + sqrt + Q96 transformation
+            sqrtPriceX96 = UniV3PriceLib.priceToSqrtQ96(
+                tokenPrice,
+                token0.decimals(),
+                token1.decimals()
+            );
+            pool.initialize(sqrtPriceX96);
+        } else {
+            console2.log(
+                "UniV3PoolBuilder/initiateLiquidity/already initialized",
+                MathLib.toUD60x18(sqrtPriceX96).pow(ud(2e18)).unwrap()
+            );
+        }
 
         // deal tokens and approve for larry
         UD60x18 baseAmount = quoteAmount.div(currentPrice);

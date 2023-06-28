@@ -9,6 +9,7 @@ import {MathLib} from "src/math/MathLib.sol";
 import {TickMath} from "src/math/TickMath.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
+/// @notice Helper contract to compute liquidity and transform prices
 library UniV3PriceLib {
     function nearestUsableTick(
         int24 tick_,
