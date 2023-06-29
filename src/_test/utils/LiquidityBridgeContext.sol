@@ -2,8 +2,9 @@
 pragma solidity >=0.8.10;
 
 import "forge-std/Test.sol";
-import {TestContext} from "./TestContext.sol";
-
+import {Test2} from "mgv_lib/Test2.sol";
+import {ForkFactory} from "./ForkFactory.sol";
+import {GenericFork} from "mgv_test/lib/forks/Generic.sol";
 import {IERC20} from "mgv_src/MgvLib.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
@@ -13,23 +14,36 @@ import {MgvStructs} from "mgv_src/MgvLib.sol";
 import {IDexLogic} from "src/DexLogic/IDexLogic.sol";
 import {DexFix} from "src/DexLogic/DexFix.sol";
 
-abstract contract LiquidityBridgeContext is TestContext {
+abstract contract LiquidityBridgeContext is Test2 {
+    GenericFork fork;
     IMangrove mgv;
 
     IERC20 base;
     IERC20 quote;
 
     LiquidityBridge bridge;
-
     IDexLogic dex;
+
+    ERC20Normalizer N;
+
+    address alice;
+    address larry;
 
     fallback() external payable {}
 
     receive() external payable {}
 
     function setUp() public virtual {
-        mgv = IMangrove(payable(loadAddress("MANGROVE")));
+        N = new ERC20Normalizer();
+
+        fork = ForkFactory.getFork(vm);
+        fork.setUp();
+
+        mgv = IMangrove(fork.get("Mangrove"));
         vm.label(address(mgv), "mgv");
+
+        alice = freshAddress("alice");
+        larry = freshAddress("larry");
 
         setTokens();
 
@@ -246,15 +260,24 @@ abstract contract LiquidityBridgeContext is TestContext {
         (askId, ) = setLiquidityBridge(bridgedQuoteAmount, spreadGeo);
 
         // mint quote token for alice
-        dealNorm(quote, alice, bridgedQuoteAmount);
+
+        deal(
+            address(quote),
+            alice,
+            N.denormalize(quote, bridgedQuoteAmount.unwrap())
+        );
 
         // mint base token for DexFix
-        dealNorm(
-            base,
+        deal(
+            address(base),
             address(dex),
-            bridgedQuoteAmount
-                .div(dex.currentPrice(address(base), address(quote)))
-                .mul(ud(2e18))
+            N.denormalize(
+                base,
+                bridgedQuoteAmount
+                    .div(dex.currentPrice(address(base), address(quote)))
+                    .mul(ud(2e18))
+                    .unwrap()
+            )
         );
 
         // [[offerId, minTakerWants, maxTakerGives, gasReqPermitted]]
@@ -304,15 +327,23 @@ abstract contract LiquidityBridgeContext is TestContext {
         (askId, ) = setLiquidityBridge(bridgedQuoteAmount, spreadGeo);
 
         // mint quote token for alice
-        dealNorm(quote, alice, bridgedQuoteAmount);
+        deal(
+            address(quote),
+            alice,
+            N.denormalize(quote, bridgedQuoteAmount.unwrap())
+        );
 
         // mint base token for DexFix
-        dealNorm(
-            base,
+        deal(
+            address(base),
             address(dex),
-            bridgedQuoteAmount
-                .div(dex.currentPrice(address(base), address(quote)))
-                .mul(ud(2e18))
+            N.denormalize(
+                base,
+                bridgedQuoteAmount
+                    .div(dex.currentPrice(address(base), address(quote)))
+                    .mul(ud(2e18))
+                    .unwrap()
+            )
         );
 
         // [[offerId, minTakerWants, maxTakerGives, gasReqPermitted]]
@@ -362,25 +393,24 @@ abstract contract LiquidityBridgeContext is TestContext {
         (, bidId) = setLiquidityBridge(bridgedQuoteAmount, spreadGeo);
 
         // mint base token for alice, with margin (x)
-        dealNorm(
-            base,
+        deal(
+            address(base),
             alice,
-            bridgedQuoteAmount
-                .div(dex.currentPrice(address(base), address(quote)))
-                .mul(ud(2e18))
-        );
-        console2.log("alice base balance", balanceNorm(base, alice) / 10 ** 18);
-        console2.log(
-            "alice quote balance",
-            balanceNorm(quote, alice) / 10 ** 18
+            N.denormalize(
+                base,
+                bridgedQuoteAmount
+                    .div(dex.currentPrice(address(base), address(quote)))
+                    .mul(ud(2e18))
+                    .unwrap()
+            )
         );
         console2.log("alice eth balance", alice.balance);
 
         // mint quote token for DexFix, with margin (x2)
-        dealNorm(quote, address(dex), bridgedQuoteAmount.mul(ud(2e18)));
-        console2.log(
-            "dex quote balance",
-            balanceNorm(quote, address(dex)) / 10 ** 18
+        deal(
+            address(quote),
+            address(dex),
+            N.denormalize(quote, bridgedQuoteAmount.mul(ud(2e18)).unwrap())
         );
 
         // allow mgv to spend quote tokens for alice
@@ -408,24 +438,6 @@ abstract contract LiquidityBridgeContext is TestContext {
         console2.log("takerGave", takerGave);
         console2.log("bounty", bounty);
         console2.log("fee", fee);
-        console2.log("alice base balance", balanceNorm(base, alice) / 10 ** 18);
-        console2.log(
-            "alice quote balance",
-            balanceNorm(quote, alice) / 10 ** 18
-        );
-        console2.log(
-            "dex base balance",
-            balanceNorm(base, address(dex)) / 10 ** 18
-        );
-        console2.log(
-            "dex quote balance",
-            balanceNorm(quote, address(dex)) / 10 ** 18
-        );
-        console2.log(
-            "bridge quote balance",
-            balanceNorm(quote, address(bridge)) / 10 ** 18
-        );
-        console2.log("alice eth balance", alice.balance);
 
         assertEq(successes, 1);
         assertEq(takerGave, bidOffer.wants());

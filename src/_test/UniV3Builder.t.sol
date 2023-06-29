@@ -3,20 +3,40 @@ pragma solidity >=0.8.10;
 
 import "forge-std/Test.sol";
 import "forge-std/StdUtils.sol";
-import {TestContext} from "./utils/TestContext.sol";
+import {ForkFactory} from "./utils/ForkFactory.sol";
+import {GenericFork} from "mgv_test/lib/forks/Generic.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import {UniV3PoolBuilder} from "./utils/UniV3PoolBuilder.sol";
 import {IERC20} from "mgv_src/MgvLib.sol";
 import {ERC20Mock} from "./mock/ERC20Mock.sol";
 import {MathLib} from "src/math/MathLib.sol";
+import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 
-contract UniV3BuilderTest is TestContext {
+contract UniV3BuilderTest is Test {
+    GenericFork fork;
+
     IERC20 base;
     IERC20 quote;
 
     UniV3PoolBuilder builder;
 
-    function setUp() public {}
+    address alice;
+    address larry;
+
+    ERC20Normalizer N;
+
+    function setUp() public {
+        N = new ERC20Normalizer();
+
+        fork = ForkFactory.getFork(vm);
+        fork.setUp();
+
+        alice = address(0x1111);
+        fork.set("alice", alice);
+
+        larry = address(0x2222);
+        fork.set("larry", larry);
+    }
 
     function buildWithMockedTokens() public {
         base = new ERC20Mock("WBTC", 18);
@@ -25,7 +45,8 @@ contract UniV3BuilderTest is TestContext {
         quote = new ERC20Mock("USDC", 12);
         vm.label(address(quote), "USDC");
 
-        builder = new UniV3PoolBuilder(base, quote, 3000);
+        builder = new UniV3PoolBuilder(fork);
+        builder.createPool(base, quote, 3000);
         assertTrue(
             address(builder.pool()) != address(0),
             "Pool address is not 0"
@@ -80,10 +101,11 @@ contract UniV3BuilderTest is TestContext {
     }
 
     function buildWithDeployedTokens() public {
-        base = loadToken("WBTC");
-        quote = loadToken("USDT");
+        base = IERC20(fork.get("WBTC"));
+        quote = IERC20(fork.get("USDT"));
 
-        builder = new UniV3PoolBuilder(base, quote, 3000);
+        builder = new UniV3PoolBuilder(fork);
+        builder.createPool(base, quote, 3000);
         assertTrue(
             address(builder.pool()) != address(0),
             "Pool address is not 0"

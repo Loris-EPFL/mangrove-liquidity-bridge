@@ -14,13 +14,14 @@ order-book.
 ## 🎹 How to use it
 
 1. Provide/Create an `.env` file following `.envdist` format
-2. Specify the chain to test (polygon or mumbai) by setting `FOUNDRY_PROFILE` to `polygon` or `mumbai`
+2. Specify the chain to test (polygon or mumbai) by setting `FOUNDRY_PROFILE` to `matic` or `maticmum`
 3. Run `npm run anvil` to fork the chain
-4. Run `source .env; forge test -f $LOCAL_URL` to run the tests
+4. Run `source .env; forge test -f $LOCAL_URL` to run the tests (you can also
+   run `npm run test`)
 
 ## Notes
 
-- ✅ All tests are OK on `mumbai` (i.e. `FOUNDRY_PROFILE=mumbai`), including a
+- ✅ All tests are OK on `mumbai` (i.e. `FOUNDRY_PROFILE=maticmum`), including a
   bridge from a UniswapV3 pool to a Mangrove order-book.
 - 🔴 On Polygon, because the repo is still expecting an already deployed
   Mangrove OB, some tests are failing.
@@ -36,4 +37,5 @@ order-book.
 - Implement a faster reneg (for DexUniV3)
 - Implement a **tenacity** behavior (taking reneg cost into acount and avoid
   certain renegs when more expensive than bridging)
-- Replace TestContext by MangroveTest
+- Use MangroveTest, even if not using base/quote ?
+- ~~Replace TestContext by fork + Test2~~
