@@ -50,14 +50,14 @@ contract FirstMangroveTest is MangroveTest {
 
     function setupDex() private {
         poolBuilder = new UniV3PoolBuilder(fork);
-        poolBuilder.createPool(base, quote, 3000);
+        poolBuilder.createPool(base, quote, 500);
 
         poolBuilder.initiateLiquidity(
             larry,
-            ud(25_000e18),
+            ud(1_000e18),
             ud(100_000e18),
-            ud(23_000e18),
-            ud(27_000e18)
+            ud(700e18),
+            ud(1_300e18)
         );
 
         dex = new DexUniV3(address(poolBuilder.pool()));
@@ -96,7 +96,7 @@ contract FirstMangroveTest is MangroveTest {
         mgv.newOffer{value: 1 ether}({
             outbound_tkn: $(base),
             inbound_tkn: $(quote),
-            wants: cash(quote, 2100),
+            wants: cash(quote, 2400),
             gives: cash(base, 2),
             gasreq: 50_000,
             gasprice: 0,
@@ -106,7 +106,7 @@ contract FirstMangroveTest is MangroveTest {
             outbound_tkn: $(quote),
             inbound_tkn: $(base),
             wants: cash(base, 1),
-            gives: cash(quote, 950),
+            gives: cash(quote, 800),
             gasreq: 50_000,
             gasprice: 0,
             pivotId: 0
@@ -123,17 +123,20 @@ contract FirstMangroveTest is MangroveTest {
     function testInitMangroveOB() public {
         printOrderBook($(base), $(quote));
         printOrderBook($(quote), $(base));
+        succeed();
     }
 
     //https://docs.mangrove.exchange/contracts/technical-references/taking-and-making-offers/taker-order/
     function testTakeAsk() public {
+        printOrderBook($(base), $(quote));
+
         vm.startPrank(taker);
-        quote.approve(address(mgv), cash(quote, 1060));
+        quote.approve(address(mgv), type(uint256).max);
         (uint takerGot, uint takerGave, , ) = mgv.marketOrder(
             $(base),
             $(quote),
-            cash(base, 1),
-            cash(quote, 1060),
+            cash(base, 5, 2), // 0.5
+            cash(quote, 1000),
             true
         );
         vm.stopPrank();
@@ -144,6 +147,8 @@ contract FirstMangroveTest is MangroveTest {
     }
 
     function testTakeBid() public {
+        printOrderBook($(quote), $(base));
+
         vm.startPrank(taker);
         base.approve(address(mgv), cash(base, 1));
         (uint takerGot, uint takerGave, , ) = mgv.marketOrder(

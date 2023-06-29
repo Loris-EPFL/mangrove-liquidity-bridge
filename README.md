@@ -39,3 +39,7 @@ order-book.
   certain renegs when more expensive than bridging)
 - Use MangroveTest, even if not using base/quote ?
 - ~~Replace TestContext by fork + Test2~~
+- Possible outcomes to handle
+  - Partially filled
+  - Totally filled
+  - Repost Failed
