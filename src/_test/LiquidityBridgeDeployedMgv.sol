@@ -13,7 +13,7 @@ import {IMangrove} from "mgv_src/IMangrove.sol";
 import {IDexLogic} from "src/DexLogic/IDexLogic.sol";
 import {DexUniV3} from "src/DexLogic/DexUniV3.sol";
 
-contract FirstMangroveTest is MangroveTest {
+contract LiquidityBridgeDeployedMgvTest is MangroveTest {
     GenericFork fork;
 
     address larry;

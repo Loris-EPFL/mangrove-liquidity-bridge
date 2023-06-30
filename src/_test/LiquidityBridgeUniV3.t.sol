@@ -12,7 +12,7 @@ import {IERC20} from "mgv_src/MgvLib.sol";
 contract LiquidityBridgeUniV3Test is LiquidityBridgeContext {
     UniV3PoolBuilder builder;
 
-    function setUp() public override {
+    function setUp() public virtual override {
         super.setUp();
     }
 

@@ -39,15 +39,18 @@ abstract contract LiquidityBridgeContext is Test2 {
         fork = ForkFactory.getFork(vm);
         fork.setUp();
 
-        mgv = IMangrove(fork.get("Mangrove"));
-        vm.label(address(mgv), "mgv");
-
         alice = freshAddress("alice");
         larry = freshAddress("larry");
 
         setTokens();
+        setMangrove();
 
         setDex();
+    }
+
+    function setMangrove() internal virtual {
+        mgv = IMangrove(fork.get("Mangrove"));
+        vm.label(address(mgv), "mgv");
     }
 
     function setTokens() internal virtual;
@@ -218,7 +221,7 @@ abstract contract LiquidityBridgeContext is Test2 {
 
         (askId, bidId) = setLiquidityBridge(bridgedQuoteAmount, spreadRatio);
 
-        spreadRatio = spreadRatio.mul(ud(2e18));
+        spreadRatio = spreadRatio.pow(ud(2e18));
         bridge.setSpreadRatio(spreadRatio);
         bridge.refreshOffers();
 
