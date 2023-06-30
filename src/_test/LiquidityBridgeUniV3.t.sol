@@ -3,26 +3,27 @@ pragma solidity >=0.8.10;
 
 import "forge-std/Test.sol";
 import {LiquidityBridgeContext} from "./utils/LiquidityBridgeContext.sol";
-
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import {MgvStructs} from "mgv_src/MgvLib.sol";
 import {UniV3PoolBuilder} from "./utils/UniV3PoolBuilder.sol";
 import {DexUniV3} from "src/DexLogic/DexUniV3.sol";
+import {IERC20} from "mgv_src/MgvLib.sol";
 
 contract LiquidityBridgeUniV3Test is LiquidityBridgeContext {
     UniV3PoolBuilder builder;
 
-    function setUp() public override {
+    function setUp() public virtual override {
         super.setUp();
     }
 
     function setTokens() internal override {
-        base = loadToken("WBTC");
-        quote = loadToken("USDT");
+        base = IERC20(fork.get("WBTC"));
+        quote = IERC20(fork.get("USDT"));
     }
 
     function setDex() internal override {
-        builder = new UniV3PoolBuilder(base, quote, 500);
+        builder = new UniV3PoolBuilder(fork);
+        builder.createPool(base, quote, 500);
 
         builder.initiateLiquidity(
             larry,

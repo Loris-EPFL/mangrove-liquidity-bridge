@@ -2,7 +2,6 @@
 pragma solidity >=0.8.10;
 
 import "forge-std/Test.sol";
-import {TestContext} from "./TestContext.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IERC20} from "mgv_src/MgvLib.sol";
@@ -12,8 +11,11 @@ import {LiquidityManager} from "src/univ3/LiquidityManager.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 import {UniV3PriceLib} from "src/univ3/UniV3PriceLib.sol";
+import {GenericFork} from "mgv_test/lib/forks/Generic.sol";
 
-contract UniV3PoolBuilder is TestContext, LiquidityManager {
+contract UniV3PoolBuilder is Test, LiquidityManager {
+    GenericFork fork;
+
     IERC20 base;
     IERC20 quote;
     bool baseIsToken0;
@@ -26,9 +28,14 @@ contract UniV3PoolBuilder is TestContext, LiquidityManager {
     IUniswapV3Factory public factory;
     IUniswapV3Pool public pool;
 
-    constructor(IERC20 base_, IERC20 quote_, uint24 fee_) {
-        N = new ERC20Normalizer();
+    ERC20Normalizer N;
 
+    constructor(GenericFork fork_) {
+        fork = fork_;
+        N = new ERC20Normalizer();
+    }
+
+    function createPool(IERC20 base_, IERC20 quote_, uint24 fee_) public {
         base = base_;
         quote = quote_;
         fee = fee_;
@@ -41,12 +48,8 @@ contract UniV3PoolBuilder is TestContext, LiquidityManager {
         console2.log("UniV3PoolBuilder/constructor/decs0", token0.decimals());
         console2.log("UniV3PoolBuilder/constructor/decs1", token1.decimals());
 
-        createPool();
-    }
-
-    function createPool() internal {
         // get or create factory
-        factory = IUniswapV3Factory(loadAddress("UNIV3_FACTORY"));
+        factory = IUniswapV3Factory(fork.get("UniV3 Factory"));
         if (address(factory) == address(0)) {
             console2.log("UniV3PoolBuilder/createPool/creating factory");
 

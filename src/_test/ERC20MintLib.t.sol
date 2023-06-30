@@ -4,12 +4,15 @@ pragma solidity >=0.8.10;
 import "forge-std/Test.sol";
 import "forge-std/StdJson.sol";
 import "forge-std/StdUtils.sol";
+import {Test2} from "mgv_lib/Test2.sol";
+import {ForkFactory} from "./utils/ForkFactory.sol";
+import {GenericFork} from "mgv_test/lib/forks/Generic.sol";
 import {IERC20} from "mgv_src/MgvLib.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 
-contract ERC20MintLibTest is Test {
-    using stdJson for string;
+contract ERC20MintLibTest is Test2 {
+    GenericFork fork;
 
     IERC20 public base;
     IERC20[] public tokens;
@@ -18,26 +21,16 @@ contract ERC20MintLibTest is Test {
     ERC20Normalizer N;
 
     function setUp() public {
-        tokens.push(loadToken("USDT"));
-        tokens.push(loadToken("WMATIC"));
+        fork = ForkFactory.getFork(vm);
+        fork.setUp();
 
-        alice = address(1111);
-        vm.label(alice, "alice");
-        bob = address(2222);
-        vm.label(bob, "bob");
+        tokens.push(IERC20(fork.get("USDT")));
+        tokens.push(IERC20(fork.get("WMATIC")));
+
+        alice = freshAddress("alice");
+        bob = freshAddress("bob");
 
         N = new ERC20Normalizer();
-    }
-
-    function loadToken(string memory name) private returns (IERC20) {
-        string memory json = vm.readFile("addresses.json");
-        string memory profile = vm.envString("FOUNDRY_PROFILE");
-
-        string memory key = string.concat("$.", name, ".", profile);
-        address tokenAddress = json.readAddress(key);
-        IERC20 token = IERC20(tokenAddress);
-        vm.label(tokenAddress, name);
-        return token;
     }
 
     function testMint() public {

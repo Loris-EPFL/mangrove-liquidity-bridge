@@ -3,7 +3,9 @@ pragma solidity >=0.8.10;
 
 import "forge-std/Test.sol";
 import "forge-std/StdUtils.sol";
-import {TestContext} from "./utils/TestContext.sol";
+import {Test2} from "mgv_lib/Test2.sol";
+import {ForkFactory} from "./utils/ForkFactory.sol";
+import {GenericFork} from "mgv_test/lib/forks/Generic.sol";
 import {IERC20} from "mgv_src/MgvLib.sol";
 import {DexUniV3} from "src/DexLogic/DexUniV3.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
@@ -15,25 +17,38 @@ import "src/math/MathLib.sol";
 import "src/math/TickMath.sol";
 import "src/univ3/LiquidityAmounts.sol";
 
-contract DexUniV3Test is TestContext {
+contract DexUniV3Test is Test2 {
+    GenericFork fork;
+
     DexUniV3 dex;
     IERC20 base;
     IERC20 quote;
     uint24 fee;
     UniV3PoolBuilder builder;
 
+    address alice;
+    address larry;
+
+    ERC20Normalizer N;
+
     function setUp() public {
+        fork = ForkFactory.getFork(vm);
+        fork.setUp();
+
         fee = 3000;
 
-        base = loadToken("WBTC");
+        base = IERC20(fork.get("WBTC"));
+        quote = IERC20(fork.get("USDT"));
 
-        quote = loadToken("USDT");
+        alice = freshAddress("alice");
+        larry = freshAddress("larry");
+
+        N = new ERC20Normalizer();
     }
 
     function setDex() private returns (uint amount0, uint amount1) {
-        console2.log("DexUniV3Test/setUp/profile", profile);
-
-        builder = new UniV3PoolBuilder(base, quote, fee);
+        builder = new UniV3PoolBuilder(fork);
+        builder.createPool(base, quote, fee);
         require(address(builder.pool()) != address(0), "Pool address is not 0");
 
         dex = new DexUniV3(address(builder.pool()));

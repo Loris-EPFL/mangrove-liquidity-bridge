@@ -6,6 +6,7 @@ import {LiquidityBridgeContext} from "./utils/LiquidityBridgeContext.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import {MgvStructs} from "mgv_src/MgvLib.sol";
 import {DexFix} from "src/DexLogic/DexFix.sol";
+import {IERC20} from "mgv_src/MgvLib.sol";
 
 contract LiquidityBridgeFixTest is LiquidityBridgeContext {
     function setUp() public override {
@@ -13,8 +14,8 @@ contract LiquidityBridgeFixTest is LiquidityBridgeContext {
     }
 
     function setTokens() internal override {
-        base = loadToken("WBTC");
-        quote = loadToken("USDT");
+        base = IERC20(fork.get("WBTC"));
+        quote = IERC20(fork.get("USDT"));
     }
 
     function setDex() internal override {

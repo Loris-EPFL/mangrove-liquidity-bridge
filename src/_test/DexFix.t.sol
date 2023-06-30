@@ -2,6 +2,9 @@
 pragma solidity >=0.8.10;
 
 import "forge-std/Test.sol";
+import {Test2} from "mgv_lib/Test2.sol";
+import {ForkFactory} from "./utils/ForkFactory.sol";
+import {GenericFork} from "mgv_test/lib/forks/Generic.sol";
 import "forge-std/StdJson.sol";
 import "forge-std/StdUtils.sol";
 import {IERC20} from "mgv_src/MgvLib.sol";
@@ -9,41 +12,33 @@ import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import {DexFix} from "src/DexLogic/DexFix.sol";
 
-contract DexFixTest is Test {
-    using stdJson for string;
+contract DexFixTest is Test2 {
+    GenericFork fork;
 
     DexFix public dex;
+
     IERC20 public base;
     IERC20 public quote;
+
     address base_owner;
     address quote_owner;
+
     ERC20Normalizer N;
+
     address alice;
 
     function setUp() public {
+        fork = ForkFactory.getFork(vm);
+        fork.setUp();
+
         N = new ERC20Normalizer();
 
-        base = loadToken("WMATIC");
-
-        quote = loadToken("USDT");
+        base = IERC20(fork.get("WMATIC"));
+        quote = IERC20(fork.get("USDT"));
 
         dex = new DexFix(address(base), address(quote));
 
-        alice = address(1111);
-        vm.label(alice, "alice");
-        vm.label(address(base), "base");
-        vm.label(address(quote), "quote");
-    }
-
-    function loadToken(string memory name) private returns (IERC20) {
-        string memory json = vm.readFile("addresses.json");
-        string memory profile = vm.envString("FOUNDRY_PROFILE");
-
-        string memory key = string.concat("$.", name, ".", profile);
-        address tokenAddress = json.readAddress(key);
-        IERC20 token = IERC20(tokenAddress);
-        vm.label(tokenAddress, name);
-        return token;
+        alice = freshAddress("alice");
     }
 
     function testMintImpersonating() public {
