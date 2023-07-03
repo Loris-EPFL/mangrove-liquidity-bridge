@@ -1,5 +1,5 @@
 // SPDX-License-Identifier:	AGPL-3.0
-pragma solidity ^0.8.10;
+pragma solidity >=0.8.10;
 
 import "forge-std/Test.sol";
 import {GenericFork} from "mgv_test/lib/forks/Generic.sol";
@@ -20,10 +20,12 @@ library ForkFactory {
         string memory profile = vm.envString("FOUNDRY_PROFILE");
         console2.log("profile:", profile);
 
-        if (areEquals(profile, "maticmum")) {
+        if (areEquals(profile, "mumbai")) {
             fork = new MumbaiFork();
+            require(fork.CHAIN_ID() == 80001, "Invalid chain id");
         } else if (areEquals(profile, "polygon")) {
             fork = new PolygonFork();
+            require(fork.CHAIN_ID() == 1101, "Invalid chain id");
         } else {
             revert("Unknown profile");
         }
