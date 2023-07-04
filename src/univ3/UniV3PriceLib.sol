@@ -42,6 +42,26 @@ library UniV3PriceLib {
         sqrtPriceX96 = MathLib.toQ96(price.mul(denormFactor).sqrt());
     }
 
+    function priceToSqrtQ96(
+        UD60x18 price,
+        IERC20 base,
+        IERC20 quote
+    ) public view returns (uint160 sqrtPriceX96) {
+        if (base < quote) {
+            sqrtPriceX96 = priceToSqrtQ96(
+                price,
+                base.decimals(),
+                quote.decimals()
+            );
+        } else {
+            sqrtPriceX96 = priceToSqrtQ96(
+                ud(1e18).div(price),
+                quote.decimals(),
+                base.decimals()
+            );
+        }
+    }
+
     function GetTickRange(
         IUniswapV3Pool pool,
         IERC20 base,

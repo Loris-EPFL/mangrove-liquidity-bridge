@@ -8,7 +8,7 @@ fs_permissions = [{ access = "read", path = "./"}]
 [rpc_endpoints]
 polygon="${POLYGON_NODE_URL}"
 mumbai="${MUMBAI_NODE_URL}"
-local="${LOCAL_URL}"
+anvil="${ANVIL_URL}"
 
 [fmt]
 tab_width=2
