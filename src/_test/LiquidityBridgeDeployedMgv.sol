@@ -25,7 +25,7 @@ contract LiquidityBridgeDeployedMgvTest is MangroveTest {
 
     function setUp() public override {
         // load context and deployed addresses
-        fork = ForkFactory.getFork(vm);
+        fork = ForkFactory.getFork();
         fork.setUp();
 
         options.base.symbol = "WETH";

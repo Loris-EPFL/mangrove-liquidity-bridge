@@ -14,16 +14,9 @@ import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
+import {LiquidityBridge} from "src/LiquidityBridge.sol";
 
 contract DeployUniV3BridgeCheck is Script {
-    struct BridgeUniV3 {
-        address base;
-        address quote;
-        uint24 fee;
-        UD60x18 quoteAmount;
-        UD60x18 spreadRatio;
-    }
-
     GenericFork fork;
 
     IMangrove mgv;
@@ -35,10 +28,89 @@ contract DeployUniV3BridgeCheck is Script {
 
     IDexLogic public dex;
 
+    LiquidityBridge bridge;
+    UD60x18 quoteAmount = ud(1_000e18);
+    UD60x18 spreadRatio = ud(1010e15);
+
     ERC20Normalizer N = new ERC20Normalizer();
 
     function run() public {
         setUp();
+
+        check();
+
+        vm.startBroadcast();
+        deployBridge();
+    }
+
+    function setUp() public {
+        fork = ForkFactory.getFork();
+        fork.setUp();
+
+        setUpTokens();
+
+        setUpMangrove();
+
+        setUpDex();
+    }
+
+    function setUpTokens() public {
+        // setupping tokens
+        base = IERC20(fork.get("WBTC"));
+        quote = IERC20(fork.get("USDT"));
+    }
+
+    function setUpMangrove() public {
+        // setupping mangrove & reader
+        mgv = IMangrove(fork.get("Mangrove"));
+        reader = new MgvReader(address(mgv));
+    }
+
+    function setUpDex() public {
+        // setupping univ3 dex
+        address factoryAddress = fork.get("UniV3 Factory");
+        require(
+            factoryAddress != address(0),
+            "Factory address not found in env"
+        );
+
+        IUniswapV3Factory factory = IUniswapV3Factory(factoryAddress);
+        // get or create pool
+        address poolAddress = factory.getPool(
+            address(base),
+            address(quote),
+            fee
+        );
+        require(
+            poolAddress != address(0),
+            "Pool address not found for pair and fees"
+        );
+
+        console2.log("UniV3 Pool :", poolAddress);
+
+        (uint160 sqrtPriceX96, , , , , , ) = IUniswapV3Pool(poolAddress)
+            .slot0();
+        require(sqrtPriceX96 > 0, "UniV3 Pool not initialized");
+
+        dex = new DexUniV3(poolAddress);
+    }
+
+    function check() public {
+        checkMangrove();
+
+        checkDex();
+    }
+
+    function checkMangrove() public {
+        MgvStructs.LocalPacked localAsk;
+        MgvStructs.LocalPacked localBid;
+
+        localAsk = reader.local(address(base), address(quote));
+        localBid = reader.local(address(quote), address(base));
+
+        require(localAsk.active(), "Local ASK not active");
+        require(localBid.active(), "Local BID not active");
+
         // mangrove OB exists + output KPIs
         // - OB active on both sides (ASK & BID)
         // -
@@ -66,7 +138,9 @@ contract DeployUniV3BridgeCheck is Script {
         volume = reader.minVolume(address(quote), address(base), 500_000);
         volumeNorm = ud(N.normalize(quote, volume));
         console2.log("Min BID volume", volumeNorm.unwrap());
+    }
 
+    function checkDex() public view {
         // target dex exists + output KPIs
         // kpi 1 : current midPrice
         // kpi 2 : slippage for quoteAmount
@@ -74,43 +148,15 @@ contract DeployUniV3BridgeCheck is Script {
         console2.log("Dex midPrice", midPrice.unwrap());
     }
 
-    function setUp() public {
-        fork = ForkFactory.getFork(vm);
-        fork.setUp();
-
-        // setupping tokens
-        base = IERC20(fork.get("WBTC"));
-        quote = IERC20(fork.get("USDT"));
-
-        // setupping mangrove & reader
-        mgv = IMangrove(fork.get("Mangrove"));
-        reader = new MgvReader(address(mgv));
-
-        // setupping univ3 dex
-        address factoryAddress = fork.get("UniV3 Factory");
-        require(
-            factoryAddress != address(0),
-            "Factory address not found in env"
+    function deployBridge() public {
+        bridge = new LiquidityBridge(
+            mgv,
+            base,
+            quote,
+            quoteAmount,
+            spreadRatio,
+            address(dex),
+            fork.get("CHIEF")
         );
-
-        IUniswapV3Factory factory = IUniswapV3Factory(factoryAddress);
-        // get or create pool
-        address poolAddress = factory.getPool(
-            address(base),
-            address(quote),
-            fee
-        );
-        require(
-            poolAddress != address(0),
-            "Pool address not found for pair and fees"
-        );
-
-        console2.log("UniV3 Pool :", poolAddress);
-
-        (uint160 sqrtPriceX96, , , , , , ) = IUniswapV3Pool(poolAddress)
-            .slot0();
-        require(sqrtPriceX96 > 0, "UniV3 Pool not initialized");
-
-        dex = new DexUniV3(poolAddress);
     }
 }

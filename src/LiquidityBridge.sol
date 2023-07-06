@@ -53,6 +53,30 @@ contract LiquidityBridge is Direct {
         setAdmin(admin);
     }
 
+    /// @notice This enables the admin to withdraw tokens from the contract. Notice that only the admin can call this.
+    /// @param token The token to be withdrawn
+    /// @param amount The amount to be withdrawn
+    /// @param to The address the amount should be transferred to.
+    /// @return success true if transfer was successful; otherwise, false.
+    function withdrawToken(
+        address token,
+        uint amount,
+        address to
+    ) external onlyAdmin returns (bool success) {
+        return TransferLib.transferToken(IERC20(token), to, amount);
+    }
+
+    /// @notice This enables the admin to withdraw native tokens from the contract. Notice that only the admin can call this.
+    /// @param amount The amount to be withdrawn
+    /// @param to The address the amount should be transferred to.
+    /// @return success true if transfer was successful; otherwise, false.
+    function withdrawNative(
+        uint amount,
+        address to
+    ) external onlyAdmin returns (bool success) {
+        (success, ) = to.call{value: amount}("");
+    }
+
     /// @notice Sets the underlying bridged dex where the liquidity will be sourced from
     function setDex(IDexLogic dexLogic) external onlyAdmin {
         dex = IDexLogic(dexLogic);
@@ -114,8 +138,6 @@ contract LiquidityBridge is Direct {
                 noRevert: false
             })
         );
-        QUOTE.approve(address(dex), notNormWantAmount);
-        BASE.approve(address(MGV), notNormGiveAmount);
 
         notNormWantAmount = N.denormalize(
             BASE,
@@ -137,8 +159,6 @@ contract LiquidityBridge is Direct {
                 noRevert: false
             })
         );
-        BASE.approve(address(dex), notNormWantAmount);
-        QUOTE.approve(address(MGV), notNormGiveAmount);
 
         return (askId, bidId);
     }
@@ -174,8 +194,6 @@ contract LiquidityBridge is Direct {
             }),
             askId
         );
-        QUOTE.approve(address(dex), notNormWantAmount);
-        BASE.approve(address(MGV), notNormGiveAmount);
 
         MgvStructs.OfferPacked bidOffer = MGV.offers(
             address(QUOTE),
@@ -205,8 +223,6 @@ contract LiquidityBridge is Direct {
             }),
             bidId
         );
-        BASE.approve(address(dex), notNormWantAmount);
-        QUOTE.approve(address(MGV), notNormGiveAmount);
     }
 
     function __posthookSuccess__(
@@ -246,7 +262,7 @@ contract LiquidityBridge is Direct {
             deprovision: deprovision
         });
         QUOTE.approve(address(dex), 0);
-        BASE.approve(address(MGV), 0);
+        //BASE.approve(address(MGV), 0);
 
         freeWei += retractOffer({
             outbound_tkn: QUOTE,
@@ -255,7 +271,7 @@ contract LiquidityBridge is Direct {
             deprovision: deprovision
         });
         BASE.approve(address(dex), 0);
-        QUOTE.approve(address(MGV), 0);
+        //QUOTE.approve(address(MGV), 0);
 
         if (freeWei > 0) {
             require(MGV.withdraw(freeWei), "LiquidityBridge/withdrawFail");
@@ -283,5 +299,10 @@ contract LiquidityBridge is Direct {
     ) internal override returns (bytes32) {
         refreshOffers();
         return "posthook/offersRefreshed";
+    }
+
+    function __activate__(IERC20 token) internal override {
+        super.__activate__(token);
+        token.approve(address(dex), type(uint256).max);
     }
 }

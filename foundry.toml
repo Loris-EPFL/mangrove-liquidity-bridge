@@ -5,11 +5,6 @@ libs = ["node_modules", "lib"]
 remappings = []
 fs_permissions = [{ access = "read", path = "./"}]
 
-[rpc_endpoints]
-polygon="${POLYGON_NODE_URL}"
-mumbai="${MUMBAI_NODE_URL}"
-anvil="${ANVIL_URL}"
-
 [fmt]
 tab_width=2
 int_types="short"

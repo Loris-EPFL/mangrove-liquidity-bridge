@@ -12,8 +12,8 @@
     "build-076": "export FOUNDRY_PROFILE=0_7_6; forge build --skip script",
     "build-default": "export FOUNDRY_PROFILE=default; forge build",
     "build": "npm run build-076 && npm run build-default",
-    "test": "npm config set script-shell \"/bin/bash\"; source .env; source processEnv.sh; forge test -f $ANVIL_URL",
-    "anvil": "npm config set script-shell \"/bin/bash\"; source .env; source processEnv.sh; anvil -f=$NODE_URL",
+    "test": "npm config set script-shell \"/bin/bash\"; source processEnv.sh; forge test -f $ANVIL_URL",
+    "anvil": "npm config set script-shell \"/bin/bash\"; source processEnv.sh; anvil -f=$NODE_URL",
     "ethernal-reset": "npm config set script-shell \"/bin/bash\"; source .env; node node_modules/ethernal/bin/index.js reset mumbai-anvil",
     "ethernal-start": "npm config set script-shell \"/bin/bash\"; source .env; node node_modules/ethernal/bin/index.js listen"
   },
@@ -22,6 +22,7 @@
   "dependencies": {
     "@mangrovedao/mangrove.js": "^1.2.10",
     "dotenv": "^16.1.4",
+    "ethernal": "^2.3.0",
     "yargs": "^17.7.2"
   }
 }

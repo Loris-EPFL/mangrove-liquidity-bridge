@@ -32,7 +32,7 @@ contract DexUniV3Test is Test2 {
     ERC20Normalizer N;
 
     function setUp() public {
-        fork = ForkFactory.getFork(vm);
+        fork = ForkFactory.getFork();
         fork.setUp();
 
         fee = 3000;

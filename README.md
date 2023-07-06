@@ -48,4 +48,4 @@ order-book.
   - x ANVIL
   - x TENDERLY
 - Implement withdraw and withdrawNative
-- Implement approval at activation/creation
+- ~~Implement approval at activation/creation~~

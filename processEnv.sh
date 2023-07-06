@@ -1,4 +1,6 @@
 # Process .env to export useful variables 
+source .env
+
 # List of variables created in this script:
 # - FOUNDRY_PROFILE
 # - Chain_Name

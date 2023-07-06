@@ -17,12 +17,10 @@ contract DeployUniV3Pool is Script {
     address quote;
     IUniswapV3Factory factory;
 
-    constructor() {
-        fork = ForkFactory.getFork(vm);
-        fork.setUp();
-    }
-
     function run() public {
+        fork = ForkFactory.getFork();
+        fork.setUp();
+
         innerRun({baseName: "WBTC", quoteName: "USDT", fees: 500});
     }
 
@@ -47,8 +45,8 @@ contract DeployUniV3Pool is Script {
         );
         require(address(pool) == address(0), "Pool already exists");
 
-        console2.log("Creating Pool");
         pool = IUniswapV3Pool(factory.createPool(base, quote, fees));
+        console2.log("Pool created", address(pool));
 
         uint160 sqrtPriceX96 = UniV3PriceLib.priceToSqrtQ96(
             ud(25_000e18),
@@ -56,7 +54,12 @@ contract DeployUniV3Pool is Script {
             IERC20(quote)
         );
         pool.initialize(sqrtPriceX96);
+
         (uint160 sqrtPriceX96_, , , , , , ) = pool.slot0();
-        console2.log("sqrtPriceX96", sqrtPriceX96_);
+        require(
+            sqrtPriceX96 == sqrtPriceX96_,
+            "SqrtPriceX96 initialization mismatch"
+        );
+        console2.log("Pool initialized sqrtPriceX96", sqrtPriceX96_);
     }
 }

@@ -36,7 +36,7 @@ abstract contract LiquidityBridgeContext is Test2 {
     function setUp() public virtual {
         N = new ERC20Normalizer();
 
-        fork = ForkFactory.getFork(vm);
+        fork = ForkFactory.getFork();
         fork.setUp();
 
         alice = freshAddress("alice");

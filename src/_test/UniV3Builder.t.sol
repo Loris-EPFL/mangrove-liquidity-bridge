@@ -28,7 +28,7 @@ contract UniV3BuilderTest is Test {
     function setUp() public {
         N = new ERC20Normalizer();
 
-        fork = ForkFactory.getFork(vm);
+        fork = ForkFactory.getFork();
         fork.setUp();
 
         alice = address(0x1111);
