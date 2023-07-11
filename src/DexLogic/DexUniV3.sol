@@ -14,7 +14,7 @@ contract DexUniV3 is LiquidityManager, IDexLogic, AccessControlled {
     IUniswapV3Pool private immutable pool;
     ERC20Normalizer private immutable N;
 
-    constructor(address pool_) AccessControlled(msg.sender) {
+    constructor(address pool_, address admin) AccessControlled(admin) {
         pool = IUniswapV3Pool(pool_);
         N = new ERC20Normalizer();
 

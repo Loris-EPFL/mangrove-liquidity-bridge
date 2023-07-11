@@ -9,7 +9,7 @@ library ForkFactory {
     function getFork() internal returns (GenericFork fork) {
         if (block.chainid == 80001) {
             fork = new MumbaiFork();
-        } else if (block.chainid == 1101) {
+        } else if (block.chainid == 137) {
             fork = new PolygonFork();
         } else {
             revert("Unknown profile");

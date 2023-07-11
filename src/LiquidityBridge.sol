@@ -77,6 +77,16 @@ contract LiquidityBridge is Direct {
         (success, ) = to.call{value: amount}("");
     }
 
+    function withdrawBalance() public onlyAdmin {
+        uint balance = MGV.balanceOf(address(this));
+
+        if (balance > 0) {
+            require(MGV.withdraw(balance), "LiquidityBridge/withdrawFail");
+            (bool noRevert, ) = admin().call{value: balance}("");
+            require(noRevert, "LiquidityBridge/weiTransferFail");
+        }
+    }
+
     /// @notice Sets the underlying bridged dex where the liquidity will be sourced from
     function setDex(IDexLogic dexLogic) external onlyAdmin {
         dex = IDexLogic(dexLogic);
@@ -90,10 +100,11 @@ contract LiquidityBridge is Direct {
     /// @notice Sets the spread used to post the offers (spotPrice x spreadRatio -> for the ask, spotPrice / spreadRatio -> for the bid )
     /// @param spreadGeo_ the ratio of BASE/QUOTE price. Should be > 1
     function setSpreadRatio(UD60x18 spreadGeo_) public onlyAdmin {
-        require(ud(1e18) < spreadGeo_, "LiquidityUnifier/ratioTooSmall");
+        require(ud(1e18) < spreadGeo_, "LiquidityBridge/ratioTooSmall");
         spreadRatio = spreadGeo_;
     }
 
+    // TODO : rename to newOffers
     function newLiquidityOffers(
         uint askPivotId,
         uint bidPivotId
@@ -108,11 +119,11 @@ contract LiquidityBridge is Direct {
         // if maker wishes to retrieve native tokens it should call MGV.withdraw (and have a positive balance)
         require(
             !MGV.isLive(MGV.offers(address(BASE), address(QUOTE), askId)),
-            "LiquidityUnifier/askAlreadyActive"
+            "LiquidityBridge/askAlreadyActive"
         );
         require(
             !MGV.isLive(MGV.offers(address(QUOTE), address(BASE), bidId)),
-            "LiquidityUnifier/bidAlreadyActive"
+            "LiquidityBridge/bidAlreadyActive"
         );
         // FIXME the above requirements are not enough because offerId might be live on another base, stable market
         UD60x18 midPrice = dex.currentPrice(address(BASE), address(QUOTE));
@@ -261,8 +272,6 @@ contract LiquidityBridge is Direct {
             offerId: askId,
             deprovision: deprovision
         });
-        QUOTE.approve(address(dex), 0);
-        //BASE.approve(address(MGV), 0);
 
         freeWei += retractOffer({
             outbound_tkn: QUOTE,
@@ -270,8 +279,6 @@ contract LiquidityBridge is Direct {
             offerId: bidId,
             deprovision: deprovision
         });
-        BASE.approve(address(dex), 0);
-        //QUOTE.approve(address(MGV), 0);
 
         if (freeWei > 0) {
             require(MGV.withdraw(freeWei), "LiquidityBridge/withdrawFail");

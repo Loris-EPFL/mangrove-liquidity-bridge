@@ -88,7 +88,16 @@ abstract contract LiquidityBridgeContext is Test2 {
         vm.label(address(bridge), "bridge");
 
         mgv.fund{value: 0.1 ether}(address(bridge));
+        console2.log(
+            "bridge balance before new offer",
+            mgv.balanceOf(address(bridge))
+        );
+
         (askId, bidId) = bridge.newLiquidityOffers(0, 0);
+        console2.log(
+            "bridge balance after new offer",
+            mgv.balanceOf(address(bridge))
+        );
 
         IERC20[] memory tokens = new IERC20[](2);
         tokens[0] = base;
@@ -249,9 +258,47 @@ abstract contract LiquidityBridgeContext is Test2 {
 
         (askId, bidId) = setLiquidityBridge(bridgedQuoteAmount, spreadRatio);
         bridge.retractOffers(true);
+        console2.log(
+            "bridge balance after retract offer",
+            mgv.balanceOf(address(bridge))
+        );
 
         assertEq(getAskOffer(askId).gives(), 0);
         assertEq(getBidOffer(bidId).gives(), 0);
+    }
+
+    function testBalance() public {
+        UD60x18 bridgedQuoteAmount = ud(1000e18);
+        UD60x18 spreadRatio = ud(1010e15);
+
+        uint askId;
+        uint bidId;
+
+        (askId, bidId) = setLiquidityBridge(bridgedQuoteAmount, spreadRatio);
+
+        // retracting offers without deprovisionning
+        bridge.retractOffers(false);
+        console2.log(
+            "bridge balance after retract without deprovision",
+            mgv.balanceOf(address(bridge))
+        );
+
+        // withdrawing balance
+        bridge.withdrawBalance();
+        assertEq(mgv.balanceOf(address(bridge)), 0);
+        // bridge can still refresh offers bacause funds are still attached to it
+        bridge.refreshOffers();
+        assertEq(mgv.balanceOf(address(bridge)), 0);
+        console2.log(
+            "bridge balance after refresh",
+            mgv.balanceOf(address(bridge))
+        );
+
+        bridge.retractOffers(true);
+        console2.log(
+            "bridge balance after retract with deprovision",
+            mgv.balanceOf(address(bridge))
+        );
     }
 
     function testSnipeAskGoodPrice() public {

@@ -1,22 +1,29 @@
-# .envdist (template of .env file, to be copied as .env and filled with your values)
+# .env
 
 # [Optional] Ethernal credentials, used for sync in `npm scripts`, a fork blocks
 # and transactions explorer. See : https://tryethernal.com/
-export ETHERNAL_EMAIL=your@email.test
-export ETHERNAL_PASSWORD=your
+#export ETHERNAL_EMAIL=
+#export ETHERNAL_PASSWORD=
 
 # anvil
-export LOCAL_URL=http://127.0.0.1:8545
+export ANVIL_URL=http://127.0.0.1:8545
 
-# Select Profile and corresponding RPC URL
-# FOUNDRY_PROFILE is used to read addresses.json file (containing addresses of contracts)
-# RPC_URL is used to fork the chain with anvil (see npm script "anvil")
-export FOUNDRY_PROFILE=maticmum
-export RPC_URL=https://polygon-mumbai.alchemy-or-other.com/your-key
+# List of url to access the chains
+export MUMBAI_NODE_URL=
+export POLYGON_NODE_URL=
+#export MUMBAI_TENDERLY_NODE_URL=
+#export POLYGON_TENDERLY_NODE_URL=
 
-#export FOUNDRY_PROFILE=polygon
-#export RPC_URL=https://polygon-mainnet.alchemy-or-other.com/your-key
+# List of private keys to use to deploy contracts
+export MUMBAI_PRIVATE_KEY=
+export MUMBAI_TENDERLY_PRIVATE_KEY=
+#export POLYGON_PRIVATE_KEY=
+#export POLYGON_TENDERLY_PRIVATE_KEY=
 
+# List of addresses, admin and deploed contracts
+export CHIEF=
+export DEXLOGIC=
+export BRIDGE=
 
-
-
+# target chain (mumbai|polygon|tenderly-mumbai|tenderly-polygon|...)
+export chain_name=polygon

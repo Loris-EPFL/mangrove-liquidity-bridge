@@ -10,7 +10,7 @@ import {UniV3PriceLib} from "src/univ3/UniV3PriceLib.sol";
 import {IERC20} from "mgv_src/MgvLib.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 
-contract DeployUniV3Pool is Script {
+contract DeployUniV3PoolScript is Script {
     GenericFork fork;
 
     address base;

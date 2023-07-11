@@ -60,7 +60,7 @@ contract LiquidityBridgeDeployedMgvTest is MangroveTest {
             ud(1_300e18)
         );
 
-        dex = new DexUniV3(address(poolBuilder.pool()));
+        dex = new DexUniV3(address(poolBuilder.pool()), address(this));
     }
 
     function setupLiquidityBridge() private {

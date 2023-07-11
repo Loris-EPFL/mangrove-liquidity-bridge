@@ -33,6 +33,6 @@ contract LiquidityBridgeUniV3Test is LiquidityBridgeContext {
             ud(27_000e18)
         );
 
-        dex = new DexUniV3(address(builder.pool()));
+        dex = new DexUniV3(address(builder.pool()), address(this));
     }
 }

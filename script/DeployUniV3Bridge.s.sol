@@ -16,7 +16,7 @@ import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import {LiquidityBridge} from "src/LiquidityBridge.sol";
 
-contract DeployUniV3BridgeCheck is Script {
+contract DeployUniV3BridgeScript is Script {
     GenericFork fork;
 
     IMangrove mgv;
@@ -24,28 +24,24 @@ contract DeployUniV3BridgeCheck is Script {
 
     IERC20 public base;
     IERC20 public quote;
-    uint24 public fee = 500;
+    uint24 public fee = 100;
 
+    address chief;
+
+    address uniV3PoolAddress;
     IDexLogic public dex;
 
     LiquidityBridge bridge;
     UD60x18 quoteAmount = ud(1_000e18);
-    UD60x18 spreadRatio = ud(1010e15);
+    UD60x18 spreadRatio = ud(1005e15);
 
     ERC20Normalizer N = new ERC20Normalizer();
-
-    function run() public {
-        setUp();
-
-        check();
-
-        vm.startBroadcast();
-        deployBridge();
-    }
 
     function setUp() public {
         fork = ForkFactory.getFork();
         fork.setUp();
+
+        chief = vm.envAddress("CHIEF");
 
         setUpTokens();
 
@@ -54,10 +50,45 @@ contract DeployUniV3BridgeCheck is Script {
         setUpDex();
     }
 
+    function run() public {
+        //setUp();
+        check();
+
+        createDexLogic();
+
+        createBridge();
+    }
+
+    function deployDexLogic() public {
+        check();
+
+        vm.startBroadcast();
+        createDexLogic();
+        vm.stopBroadcast();
+    }
+
+    function deployBridge() public {
+        check();
+
+        // read from .env
+        loadDexLogic("DEXLOGIC");
+
+        vm.startBroadcast();
+        createBridge();
+        vm.stopBroadcast();
+    }
+
     function setUpTokens() public {
         // setupping tokens
-        base = IERC20(fork.get("WBTC"));
+        base = IERC20(fork.get("USDC"));
+        console2.log("Base token", address(base));
+        console2.log("Base token symbol", base.symbol());
+        console2.log("Base token decimals", base.decimals());
+
         quote = IERC20(fork.get("USDT"));
+        console2.log("Quote token", address(quote));
+        console2.log("Quote token symbol", quote.symbol());
+        console2.log("Quote token decimals", quote.decimals());
     }
 
     function setUpMangrove() public {
@@ -71,28 +102,22 @@ contract DeployUniV3BridgeCheck is Script {
         address factoryAddress = fork.get("UniV3 Factory");
         require(
             factoryAddress != address(0),
-            "Factory address not found in env"
+            "Factory address not found in addresses.json"
         );
 
         IUniswapV3Factory factory = IUniswapV3Factory(factoryAddress);
         // get or create pool
-        address poolAddress = factory.getPool(
-            address(base),
-            address(quote),
-            fee
-        );
+        uniV3PoolAddress = factory.getPool(address(base), address(quote), fee);
         require(
-            poolAddress != address(0),
+            uniV3PoolAddress != address(0),
             "Pool address not found for pair and fees"
         );
 
-        console2.log("UniV3 Pool :", poolAddress);
+        console2.log("UniV3 Pool :", uniV3PoolAddress);
 
-        (uint160 sqrtPriceX96, , , , , , ) = IUniswapV3Pool(poolAddress)
+        (uint160 sqrtPriceX96, , , , , , ) = IUniswapV3Pool(uniV3PoolAddress)
             .slot0();
         require(sqrtPriceX96 > 0, "UniV3 Pool not initialized");
-
-        dex = new DexUniV3(poolAddress);
     }
 
     function check() public {
@@ -117,16 +142,16 @@ contract DeployUniV3BridgeCheck is Script {
         // kpi 1 : density, impact on quoteAmount
         MgvStructs.LocalPacked local;
         local = reader.local(address(base), address(quote));
-        console2.log("Local density", local.density());
-        console2.log("Local active", local.active());
-        console2.log("Local fee", local.fee());
-        console2.log("Local offer.gas_base", local.offer_gasbase());
+        console2.log("Local ASK density", local.density());
+        console2.log("Local ASK active", local.active());
+        console2.log("Local ASK fee", local.fee());
+        console2.log("Local ASK offer.gas_base", local.offer_gasbase());
 
         local = reader.local(address(quote), address(base));
-        console2.log("Local density", local.density());
-        console2.log("Local active", local.active());
-        console2.log("Local fee", local.fee());
-        console2.log("Local offer.gas_base", local.offer_gasbase());
+        console2.log("Local BID density", local.density());
+        console2.log("Local BID active", local.active());
+        console2.log("Local BID fee", local.fee());
+        console2.log("Local BID offer.gas_base", local.offer_gasbase());
 
         uint volume;
         UD60x18 volumeNorm;
@@ -141,14 +166,30 @@ contract DeployUniV3BridgeCheck is Script {
     }
 
     function checkDex() public view {
-        // target dex exists + output KPIs
-        // kpi 1 : current midPrice
-        // kpi 2 : slippage for quoteAmount
-        UD60x18 midPrice = dex.currentPrice(address(base), address(quote));
-        console2.log("Dex midPrice", midPrice.unwrap());
+        (uint160 sqrtPriceX96, , , , , , ) = IUniswapV3Pool(uniV3PoolAddress)
+            .slot0();
+        require(sqrtPriceX96 > 0, "UniV3 Pool not initialized");
     }
 
-    function deployBridge() public {
+    function checkDexLogic() public view {
+        require(address(dex) != address(0), "DexLogic not found");
+        require(
+            dex.currentPrice(address(base), address(quote)).gt(ud(0)),
+            "DexLogic not initialized"
+        );
+    }
+
+    function loadDexLogic(string memory dexLogicName) public {
+        dex = IDexLogic(vm.envAddress(dexLogicName));
+        checkDexLogic();
+    }
+
+    function createDexLogic() public {
+        dex = new DexUniV3(uniV3PoolAddress, chief);
+        checkDexLogic();
+    }
+
+    function createBridge() public {
         bridge = new LiquidityBridge(
             mgv,
             base,
@@ -156,7 +197,7 @@ contract DeployUniV3BridgeCheck is Script {
             quoteAmount,
             spreadRatio,
             address(dex),
-            fork.get("CHIEF")
+            chief
         );
     }
 }
