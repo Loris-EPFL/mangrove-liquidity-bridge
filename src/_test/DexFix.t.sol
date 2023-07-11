@@ -28,7 +28,7 @@ contract DexFixTest is Test2 {
     address alice;
 
     function setUp() public {
-        fork = ForkFactory.getFork(vm);
+        fork = ForkFactory.getFork();
         fork.setUp();
 
         N = new ERC20Normalizer();

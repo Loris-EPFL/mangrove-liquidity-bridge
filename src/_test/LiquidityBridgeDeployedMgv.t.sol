@@ -25,7 +25,7 @@ contract LiquidityBridgeDeployedMgvTest is MangroveTest {
 
     function setUp() public override {
         // load context and deployed addresses
-        fork = ForkFactory.getFork(vm);
+        fork = ForkFactory.getFork();
         fork.setUp();
 
         options.base.symbol = "WETH";
@@ -60,7 +60,7 @@ contract LiquidityBridgeDeployedMgvTest is MangroveTest {
             ud(1_300e18)
         );
 
-        dex = new DexUniV3(address(poolBuilder.pool()));
+        dex = new DexUniV3(address(poolBuilder.pool()), address(this));
     }
 
     function setupLiquidityBridge() private {

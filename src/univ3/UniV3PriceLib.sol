@@ -28,11 +28,37 @@ library UniV3PriceLib {
         }
     }
 
+    function sqrtQ96ToPrice(
+        uint160 sqrtPriceX96,
+        address base,
+        address quote
+    ) internal view returns (UD60x18 price) {
+        price = ud(sqrtPriceX96).mul(ud(sqrtPriceX96));
+
+        uint8 decs0;
+        uint8 decs1;
+
+        if (base < quote) {
+            decs0 = IERC20(base).decimals();
+            decs1 = IERC20(quote).decimals();
+        } else {
+            decs0 = IERC20(quote).decimals();
+            decs1 = IERC20(base).decimals();
+        }
+
+        UD60x18 denormFactor;
+        if (decs0 < decs1) {
+            denormFactor = ud(1e18).div(ud(10 ** (18 + decs1 - decs0)));
+        } else {
+            denormFactor = ud(10 ** (18 + decs0 - decs1));
+        }
+    }
+
     function priceToSqrtQ96(
         UD60x18 price,
         uint8 decs0,
         uint8 decs1
-    ) public pure returns (uint160 sqrtPriceX96) {
+    ) internal pure returns (uint160 sqrtPriceX96) {
         UD60x18 denormFactor;
         if (decs0 < decs1) {
             denormFactor = ud(10 ** (18 + decs1 - decs0));
@@ -42,13 +68,33 @@ library UniV3PriceLib {
         sqrtPriceX96 = MathLib.toQ96(price.mul(denormFactor).sqrt());
     }
 
+    function priceToSqrtQ96(
+        UD60x18 price,
+        IERC20 base,
+        IERC20 quote
+    ) internal view returns (uint160 sqrtPriceX96) {
+        if (base < quote) {
+            sqrtPriceX96 = priceToSqrtQ96(
+                price,
+                base.decimals(),
+                quote.decimals()
+            );
+        } else {
+            sqrtPriceX96 = priceToSqrtQ96(
+                ud(1e18).div(price),
+                quote.decimals(),
+                base.decimals()
+            );
+        }
+    }
+
     function GetTickRange(
         IUniswapV3Pool pool,
         IERC20 base,
         IERC20 quote,
         UD60x18 priceLower,
         UD60x18 priceUpper
-    ) public view returns (int24 tickLower, int24 tickUpper) {
+    ) internal view returns (int24 tickLower, int24 tickUpper) {
         uint8 decs0 = IERC20(pool.token0()).decimals();
         uint8 decs1 = IERC20(pool.token1()).decimals();
         int24 tickSpacing = pool.tickSpacing();

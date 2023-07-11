@@ -32,7 +32,7 @@ contract DexUniV3Test is Test2 {
     ERC20Normalizer N;
 
     function setUp() public {
-        fork = ForkFactory.getFork(vm);
+        fork = ForkFactory.getFork();
         fork.setUp();
 
         fee = 3000;
@@ -51,7 +51,7 @@ contract DexUniV3Test is Test2 {
         builder.createPool(base, quote, fee);
         require(address(builder.pool()) != address(0), "Pool address is not 0");
 
-        dex = new DexUniV3(address(builder.pool()));
+        dex = new DexUniV3(address(builder.pool()), address(this));
 
         (amount0, amount1) = builder.initiateLiquidity(
             larry,

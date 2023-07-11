@@ -21,7 +21,7 @@ contract ERC20MintLibTest is Test2 {
     ERC20Normalizer N;
 
     function setUp() public {
-        fork = ForkFactory.getFork(vm);
+        fork = ForkFactory.getFork();
         fork.setUp();
 
         tokens.push(IERC20(fork.get("USDT")));
