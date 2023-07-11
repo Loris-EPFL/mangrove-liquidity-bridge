@@ -9,6 +9,7 @@ import {LiquidityBridge} from "src/LiquidityBridge.sol";
 import {IMangrove} from "mgv_src/IMangrove.sol";
 import {MgvReader} from "mgv_src/periphery/MgvReader.sol";
 import {MgvStructs} from "mgv_src/MgvLib.sol";
+import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 
 contract BridgeAdminScript is Script {
     GenericFork fork;
@@ -29,7 +30,7 @@ contract BridgeAdminScript is Script {
         mgv = IMangrove(fork.get("Mangrove"));
         reader = MgvReader(fork.get("MgvReader"));
 
-        chief = fork.get("CHIEF");
+        chief = vm.envAddress("CHIEF");
         base = IERC20(fork.get("USDC"));
         quote = IERC20(fork.get("USDT"));
 
@@ -112,6 +113,13 @@ contract BridgeAdminScript is Script {
 
     function refreshOffers() public {
         vm.startBroadcast();
+        bridge.refreshOffers();
+    }
+
+    function updateParamAndRefresh() public {
+        vm.startBroadcast();
+        bridge.setSpreadRatio(ud(10005e14));
+        //bridge.setQuoteAmount(ud(100_000e18));
         bridge.refreshOffers();
     }
 }
