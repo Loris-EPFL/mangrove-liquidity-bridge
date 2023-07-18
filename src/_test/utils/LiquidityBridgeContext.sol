@@ -497,4 +497,78 @@ abstract contract LiquidityBridgeContext is Test2 {
         assertEq(base.balanceOf(address(bridge)), 0);
         assertEq(quote.balanceOf(address(bridge)), 0);
     }
+
+    function testTakerWantsZero() public {
+        UD60x18 bridgedQuoteAmount = ud(1000e18);
+        UD60x18 spreadGeo = ud(1010e15);
+
+        uint askId;
+
+        (askId, ) = setLiquidityBridge(bridgedQuoteAmount, spreadGeo);
+
+        // mint quote token for alice
+        deal(
+            address(quote),
+            alice,
+            N.denormalize(quote, bridgedQuoteAmount.unwrap())
+        );
+
+        // mint base token for DexFix
+        deal(
+            address(base),
+            address(dex),
+            N.denormalize(
+                base,
+                bridgedQuoteAmount
+                    .div(dex.currentPrice(address(base), address(quote)))
+                    .mul(ud(2e18))
+                    .unwrap()
+            )
+        );
+
+        // [[offerId, minTakerWants, maxTakerGives, gasReqPermitted]]
+        uint[4][] memory snipeParams = new uint[4][](1);
+        uint snipeQuoteAmount = N.denormalize(
+            quote,
+            bridgedQuoteAmount.div(ud(3e18)).unwrap()
+        );
+        snipeParams[0] = [askId, 0, 0, type(uint).max];
+
+        // allow mgv to spend quote tokens for alice
+        vm.prank(alice);
+        quote.approve(address(mgv), type(uint).max);
+
+        MgvStructs.OfferPacked askOffer;
+        askOffer = mgv.offers(address(base), address(quote), askId);
+        console2.log(
+            "This base balance before snipe:",
+            base.balanceOf(address(this))
+        );
+
+        // https://docs.mangrove.exchange/contracts/technical-references/taking-and-making-offers/taker-order/#inputs-1
+        vm.prank(alice);
+        (uint successes, uint takerGot, uint takerGave, uint bounty, uint fee) = mgv
+            .snipes(
+                address(base),
+                address(quote),
+                snipeParams,
+                false // fillwants
+            );
+
+        console2.log(
+            "This base balance after snipe:",
+            base.balanceOf(address(this))
+        );
+        console2.log("successes", successes);
+        console2.log("takerGot", takerGot);
+        console2.log("takerGave", takerGave);
+        console2.log("bounty", bounty);
+        console2.log("fee", fee);
+
+        assertEq(successes, 1);
+        assertEq(bounty, 0);
+        assertEq(fee, 0);
+        assertEq(base.balanceOf(address(bridge)), 0);
+        assertEq(quote.balanceOf(address(bridge)), 0);
+    }
 }

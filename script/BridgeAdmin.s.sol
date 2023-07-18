@@ -85,6 +85,23 @@ contract BridgeAdminScript is Script {
         mgv.fund{value: 50e18}(address(bridge));
     }
 
+    // fund activate newoffers
+    function fano() public {
+        vm.startBroadcast();
+        // fund
+        mgv.fund{value: 50e18}(address(bridge));
+
+        // activate
+        IERC20[] memory tokens = new IERC20[](2);
+        tokens[0] = base;
+        tokens[1] = quote;
+
+        bridge.activate(tokens);
+
+        // newoffers
+        bridge.newLiquidityOffers(0, 0);
+    }
+
     function withdrawAll() public {
         vm.startBroadcast();
 
@@ -109,6 +126,22 @@ contract BridgeAdminScript is Script {
     function retractOffers() public {
         vm.startBroadcast();
         bridge.retractOffers(true);
+    }
+
+    function retractAndWithdraw() public {
+        vm.startBroadcast();
+        bridge.retractOffers(true);
+        bridge.withdrawBalance();
+        bridge.withdrawToken(
+            address(base),
+            base.balanceOf(address(bridge)),
+            chief
+        );
+        bridge.withdrawToken(
+            address(quote),
+            quote.balanceOf(address(bridge)),
+            chief
+        );
     }
 
     function refreshOffers() public {

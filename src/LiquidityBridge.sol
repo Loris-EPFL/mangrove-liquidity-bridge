@@ -292,6 +292,10 @@ contract LiquidityBridge is Direct {
     function __lastLook__(
         MgvLib.SingleOrder calldata order
     ) internal override returns (bytes32) {
+        if (order.wants == 0) {
+            return "TakerWantsZero";
+        }
+
         dex.swap(
             order.inbound_tkn,
             order.outbound_tkn,
