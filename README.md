@@ -54,6 +54,16 @@ the chain.
 
 Your brigde should now be ready to use.
 
+## Checks
+
+### Checking a deployed bridge
+
+1. Set .env variable (including bridge address)
+2. Fork the target chain: `npm run anvil`
+3. Display current order-book: `forge script BridgeCheckScript --tc BridgeCheckScript -f $ANVIL_URL -vv -s "displayOB()"`
+4. Update `BridgeCheckScript` with the offer id you want to check (ask and bid)
+5. Check the offer: `forge script BridgeCheckScript --tc BridgeCheckScript -f $ANVIL_URL -vv -s "snipeOffers()"`. Note: `snipeOffers()` can be replaced by `snipeAsk()` or `snipeBid()` to check only one side of the offer-book. 
+
 ## 📆 Next steps
 
 - Gas estimation : I recommand to use the gas profile tool to estimate gas

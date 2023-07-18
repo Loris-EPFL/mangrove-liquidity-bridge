@@ -32,8 +32,8 @@ contract DeployUniV3BridgeScript is Script {
     IDexLogic public dex;
 
     LiquidityBridge bridge;
-    UD60x18 quoteAmount = ud(1_000e18);
-    UD60x18 spreadRatio = ud(1005e15);
+    UD60x18 quoteAmount = ud(100_000e18);
+    UD60x18 spreadRatio = ud(100025e13);
 
     ERC20Normalizer N = new ERC20Normalizer();
 
