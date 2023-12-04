@@ -95,11 +95,11 @@ contract BridgeCheckScript is Test2 {
     }
 
     function snipeAsk() public {
-        snipeOffer(base, quote, 101);
+        snipeOffer(base, quote, 234);
     }
 
     function snipeBid() public {
-        snipeOffer(quote, base, 64);
+        snipeOffer(quote, base, 234);
     }
 
     function snipeOffers() public {

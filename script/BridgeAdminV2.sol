@@ -5,7 +5,7 @@ import {Script, console2} from "forge-std/Script.sol";
 import {ForkFactory} from "src/_test/utils/ForkFactory.sol";
 import {IERC20} from "mgv_src/MgvLib.sol";
 import {GenericFork} from "mgv_test/lib/forks/Generic.sol";
-import {LiquidityBridge} from "src/LiquidityBridge.sol";
+import {LiquidityBridge} from "src/LiquidityBridgeV2.sol";
 import {IMangrove} from "mgv_src/IMangrove.sol";
 import {MgvReader} from "mgv_src/periphery/MgvReader.sol";
 import {MgvStructs} from "mgv_src/MgvLib.sol";
@@ -82,14 +82,14 @@ contract BridgeAdminScript is Script {
 
     function fund() public {
         vm.startBroadcast();
-        mgv.fund{value: 50e18}(address(bridge));
+        mgv.fund{value: 20e18}(address(bridge));
     }
 
     // fund activate newoffers
     function fano() public {
         vm.startBroadcast();
         // fund
-        mgv.fund{value: 50e18}(address(bridge));
+        mgv.fund{value: 20e18}(address(bridge));
 
         // activate
         IERC20[] memory tokens = new IERC20[](2);
@@ -99,9 +99,7 @@ contract BridgeAdminScript is Script {
         bridge.activate(tokens);
 
         // newoffers
-        bridge.newLiquidityOffers(0, 0);
-
-        bridge.retractOffers(true);
+        bridge.deployMultiOffers(5, 0, 0);
     }
 
     function withdrawAll() public {
@@ -122,7 +120,7 @@ contract BridgeAdminScript is Script {
 
     function newOffers() public {
         vm.startBroadcast();
-        bridge.newLiquidityOffers(0, 0);
+        bridge.deployMultiOffers(15, 0, 0);
     }
 
     function retractOffers() public {
@@ -146,15 +144,15 @@ contract BridgeAdminScript is Script {
         );
     }
 
-    function refreshOffers() public {
+    function refreshOffers(uint offerId, uint binary) public {
         vm.startBroadcast();
-        bridge.refreshOffers();
+        bridge.refreshDoubleOffer(offerId, binary);
     }
 
     function updateParamAndRefresh() public {
         vm.startBroadcast();
-        bridge.setSpreadRatio(ud(10005e14));
+        bridge.setSpreadRatio(ud(10010e14));
         //bridge.setQuoteAmount(ud(100_000e18));
-        bridge.refreshOffers();
+        //bridge.refreshDoubleOffer(offerId, binary);
     }
 }

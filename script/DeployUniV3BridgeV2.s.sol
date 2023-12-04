@@ -14,7 +14,7 @@ import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
-import {LiquidityBridge} from "src/LiquidityBridge.sol";
+import {LiquidityBridge} from "src/LiquidityBridgeV2.sol";
 
 contract DeployUniV3BridgeScript is Script {
     GenericFork fork;
@@ -32,8 +32,10 @@ contract DeployUniV3BridgeScript is Script {
     IDexLogic public dex;
 
     LiquidityBridge bridge;
-    UD60x18 quoteAmount = ud(100_000e18);
-    UD60x18 spreadRatio = ud(100020e13); // 1% 1.01
+    UD60x18 quoteAmount = ud(10_000e18);
+    UD60x18 spreadRatio = ud(100200e13); // 100020 -> 100040 -> 
+    uint nbOffers = 3;
+    uint incrementValueCon = 1;
 
     ERC20Normalizer N = new ERC20Normalizer();
 
@@ -80,12 +82,12 @@ contract DeployUniV3BridgeScript is Script {
 
     function setUpTokens() public {
         // setupping tokens
-        base = IERC20(fork.get("USDC"));
+        base = IERC20(fork.get("WETH"));
         console2.log("Base token", address(base));
         console2.log("Base token symbol", base.symbol());
         console2.log("Base token decimals", base.decimals());
 
-        quote = IERC20(fork.get("USDT"));
+        quote = IERC20(fork.get("USDC"));
         console2.log("Quote token", address(quote));
         console2.log("Quote token symbol", quote.symbol());
         console2.log("Quote token decimals", quote.decimals());
@@ -196,6 +198,8 @@ contract DeployUniV3BridgeScript is Script {
             quote,
             quoteAmount,
             spreadRatio,
+            nbOffers, 
+            incrementValueCon,
             address(dex),
             chief
         );
