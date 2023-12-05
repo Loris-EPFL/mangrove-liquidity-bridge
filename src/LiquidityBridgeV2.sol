@@ -340,7 +340,8 @@ contract LiquidityBridge is Direct {
     function retractOffers(bool deprovision) external {
         uint freeWei;
 
-        for (uint i = offersDoublet.length - 1 ; i >= 0; i--) {  
+        for (uint i = offersDoublet.length; i > 0;) {  
+            i--;
             freeWei += retractOffer({
             outbound_tkn: BASE,
             inbound_tkn: QUOTE,
@@ -355,8 +356,8 @@ contract LiquidityBridge is Direct {
                 deprovision: deprovision
             });
             offersDoublet.pop();
-            
         }
+
 
         if (freeWei > 0) {
             require(MGV.withdraw(freeWei), "LiquidityBridge/withdrawFail");

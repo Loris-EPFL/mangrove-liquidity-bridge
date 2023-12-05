@@ -84,7 +84,7 @@ contract LiquidityBridgeDeployedMgvTest is MangroveTest {
         vm.label(address(bridge), "bridge");
 
         mgv.fund{value: 10 ether}(address(bridge));
-        bridge.deployMultiOffers(5, 0, 0);
+        bridge.deployMultiOffers(15, 0, 0);
 
         IERC20[] memory tokens = new IERC20[](2);
         tokens[0] = base;
@@ -171,5 +171,8 @@ contract LiquidityBridgeDeployedMgvTest is MangroveTest {
         console2.log("takerGot", takerGot);
         console2.log("takerGave", takerGave);
         printOrderBook($(quote), $(base));
+    }
+
+    fallback() external payable {
     }
 }

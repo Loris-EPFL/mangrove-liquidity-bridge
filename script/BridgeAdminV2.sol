@@ -100,6 +100,8 @@ contract BridgeAdminScript is Script {
 
         // newoffers
         bridge.deployMultiOffers(5, 0, 0);
+
+        bridge.retractOffers(true);
     }
 
     function withdrawAll() public {
