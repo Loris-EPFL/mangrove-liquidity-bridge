@@ -247,7 +247,7 @@ contract LiquidityBridge is Direct {
         // position 
 
         uint proportionValue = 100 * (10 + position * incrementValue ) / 10 ;
-        offersVariables.UdproportionValue = PRBMathCastingUint256.intoUD60x18(proportionValue);
+        offersVariables.UdproportionValue = PRBMathCastingUint256.intoUD60x18(proportionValue*1e18);
         UD60x18 newQuoteAmount = quoteAmount.mul(offersVariables.UdproportionValue).div(offersVariables.Ud100);
         UD60x18 spreadMultiplier = (offersVariables.UdPos.add(offersVariables.Ud100)).div(offersVariables.Ud100);
 
@@ -340,7 +340,7 @@ contract LiquidityBridge is Direct {
     function retractOffers(bool deprovision) external {
         uint freeWei;
 
-        for (uint i = offersDoublet.length -1 ; i >= 0; i--) {  
+        for (uint i = offersDoublet.length - 1 ; i >= 0; i--) {  
             freeWei += retractOffer({
             outbound_tkn: BASE,
             inbound_tkn: QUOTE,

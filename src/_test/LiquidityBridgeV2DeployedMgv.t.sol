@@ -7,7 +7,7 @@ import {ForkFactory} from "./utils/ForkFactory.sol";
 import {GenericFork} from "mgv_test/lib/forks/Generic.sol";
 import {UniV3PoolBuilder} from "./utils/UniV3PoolBuilder.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
-import {LiquidityBridge} from "src/LiquidityBridge.sol";
+import {LiquidityBridge} from "src/LiquidityBridgeV2.sol";
 import {IERC20} from "mgv_src/MgvLib.sol";
 import {IMangrove} from "mgv_src/IMangrove.sol";
 import {IDexLogic} from "src/DexLogic/IDexLogic.sol";
@@ -48,6 +48,12 @@ contract LiquidityBridgeDeployedMgvTest is MangroveTest {
         setupTaker();
     }
 
+    function testRetractOffer() public {
+        testInitMangroveOB();
+        bridge.retractOffers(true);
+        testInitMangroveOB();
+    }
+
     function setupDex() private {
         poolBuilder = new UniV3PoolBuilder(fork);
         poolBuilder.createPool(base, quote, 500);
@@ -70,13 +76,15 @@ contract LiquidityBridgeDeployedMgvTest is MangroveTest {
             quote,
             ud(1000e18),
             ud(1050e15),
+            5, 
+            1,
             address(dex),
             address(this)
         );
         vm.label(address(bridge), "bridge");
 
         mgv.fund{value: 10 ether}(address(bridge));
-        bridge.newLiquidityOffers(0, 0);
+        bridge.deployMultiOffers(5, 0, 0);
 
         IERC20[] memory tokens = new IERC20[](2);
         tokens[0] = base;
@@ -143,11 +151,7 @@ contract LiquidityBridgeDeployedMgvTest is MangroveTest {
 
         console2.log("takerGot", takerGot);
         console2.log("takerGave", takerGave);
-        console2.log("----Ask Side---");
         printOrderBook($(base), $(quote));
-        console2.log("----Bid Side-----");
-        printOrderBook($(quote), $(base));
-
     }
 
     function testTakeBid() public {
