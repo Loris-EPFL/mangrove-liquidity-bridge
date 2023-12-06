@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.10;
 
-import {Test2} from "mgv_lib/Test2.sol";
+import {Test2} from "@mgv/lib/Test2.sol";
 import {Script, console2} from "forge-std/Script.sol";
 import {ForkFactory} from "src/_test/utils/ForkFactory.sol";
-import {IERC20} from "mgv_src/MgvLib.sol";
-import {GenericFork} from "mgv_test/lib/forks/Generic.sol";
-import {MangroveTest} from "mgv_test/lib/MangroveTest.sol";
+import {IERC20} from "@mgv/src/core/MgvLib.sol";
+import {GenericFork} from "@mgv/test/lib/forks/Generic.sol";
+import {MangroveTest} from "@mgv/test/lib/MangroveTest.sol";
 import {LiquidityBridge} from "src/LiquidityBridge.sol";
-import {IMangrove} from "mgv_src/IMangrove.sol";
-import {AbstractMangrove} from "mgv_src/AbstractMangrove.sol";
-import {MgvReader} from "mgv_src/periphery/MgvReader.sol";
-import {MgvStructs} from "mgv_src/MgvLib.sol";
+import {IMangrove} from "@mgv/src/IMangrove.sol";
+import {AbstractMangrove} from "@mgv/src/AbstractMangrove.sol"; //TOFIX: DELETE ABSTRACTMANGROVE
+import {MgvReader} from "@mgv/src/periphery/MgvReader.sol";
+import {MgvStructs} from "@mgv/src/core/MgvLib.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 
 contract MgvTestViewer is MangroveTest {

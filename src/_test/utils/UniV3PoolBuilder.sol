@@ -4,14 +4,14 @@ pragma solidity >=0.8.10;
 import "forge-std/Test.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {IERC20} from "mgv_src/MgvLib.sol";
+import {IERC20} from "@mgv/src/core/MgvLib.sol";
 import {MathLib} from "src/math/MathLib.sol";
 import {TickMath} from "src/math/TickMath.sol";
 import {LiquidityManager} from "src/univ3/LiquidityManager.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 import {UniV3PriceLib} from "src/univ3/UniV3PriceLib.sol";
-import {GenericFork} from "mgv_test/lib/forks/Generic.sol";
+import {GenericFork} from "@mgv/test/lib/forks/Generic.sol";
 
 contract UniV3PoolBuilder is Test, LiquidityManager {
     GenericFork fork;

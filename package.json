@@ -20,7 +20,7 @@
   "author": "Guillaume Garchery",
   "license": "ISC",
   "dependencies": {
-    "@mangrovedao/mangrove.js": "^1.2.10",
+    "@mangrovedao/mangrove.js": "2.0.0-10",
     "dotenv": "^16.1.4",
     "ethernal": "^2.3.0",
     "yargs": "^17.7.2"

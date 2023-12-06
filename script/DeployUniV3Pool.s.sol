@@ -3,11 +3,11 @@ pragma solidity >=0.8.10;
 
 import {Script, console2} from "forge-std/Script.sol";
 import {ForkFactory} from "src/_test/utils/ForkFactory.sol";
-import {GenericFork} from "mgv_test/lib/forks/Generic.sol";
+import {GenericFork} from "@mgv/test/lib/forks/Generic.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {UniV3PriceLib} from "src/univ3/UniV3PriceLib.sol";
-import {IERC20} from "mgv_src/MgvLib.sol";
+import {IERC20} from "@mgv/src/core/MgvLib.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 
 contract DeployUniV3PoolScript is Script {

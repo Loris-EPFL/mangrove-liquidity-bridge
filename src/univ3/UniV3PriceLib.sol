@@ -3,7 +3,7 @@ pragma solidity >=0.8.10;
 
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import "@prb/math/Common.sol";
-import {IERC20} from "mgv_src/MgvLib.sol";
+import {IERC20} from "@mgv/src/core/MgvLib.sol";
 import {Math64x64} from "src/math/Math64x64.sol";
 import {MathLib} from "src/math/MathLib.sol";
 import {TickMath} from "src/math/TickMath.sol";

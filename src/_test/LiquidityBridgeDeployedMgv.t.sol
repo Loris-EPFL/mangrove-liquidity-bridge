@@ -2,14 +2,14 @@
 pragma solidity >=0.8.10;
 
 import "forge-std/Test.sol";
-import {MangroveTest} from "mgv_test/lib/MangroveTest.sol";
+import {MangroveTest} from "@mgv/test/lib/MangroveTest.sol";
 import {ForkFactory} from "./utils/ForkFactory.sol";
-import {GenericFork} from "mgv_test/lib/forks/Generic.sol";
+import {GenericFork} from "@mgv/test/lib/forks/Generic.sol";
 import {UniV3PoolBuilder} from "./utils/UniV3PoolBuilder.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import {LiquidityBridge} from "src/LiquidityBridge.sol";
-import {IERC20} from "mgv_src/MgvLib.sol";
-import {IMangrove} from "mgv_src/IMangrove.sol";
+import {IERC20} from "@mgv/src/core/MgvLib.sol";
+import {IMangrove} from "@mgv/src/IMangrove.sol";
 import {IDexLogic} from "src/DexLogic/IDexLogic.sol";
 import {DexUniV3} from "src/DexLogic/DexUniV3.sol";
 

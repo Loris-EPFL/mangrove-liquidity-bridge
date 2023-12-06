@@ -3,12 +3,12 @@ pragma solidity >=0.8.10;
 
 import {Script, console2} from "forge-std/Script.sol";
 import {ForkFactory} from "src/_test/utils/ForkFactory.sol";
-import {IERC20} from "mgv_src/MgvLib.sol";
-import {GenericFork} from "mgv_test/lib/forks/Generic.sol";
+import {IERC20} from "@mgv/src/core/MgvLib.sol";
+import {GenericFork} from "@mgv/test/lib/forks/Generic.sol";
 import {LiquidityBridge} from "src/LiquidityBridge.sol";
-import {IMangrove} from "mgv_src/IMangrove.sol";
-import {MgvReader} from "mgv_src/periphery/MgvReader.sol";
-import {MgvStructs} from "mgv_src/MgvLib.sol";
+import {IMangrove} from "@mgv/src/IMangrove.sol";
+import {MgvReader} from "@mgv/src/periphery/MgvReader.sol";
+import {MgvStructs} from "@mgv/src/core/MgvLib.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 
 contract BridgeAdminScript is Script {

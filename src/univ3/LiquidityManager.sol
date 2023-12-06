@@ -2,7 +2,7 @@
 pragma solidity >=0.8.10;
 
 import "forge-std/Test.sol";
-import {IERC20} from "mgv_src/MgvLib.sol";
+import {IERC20} from "@mgv/src/core/MgvLib.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {LiquidityAmounts} from "./LiquidityAmounts.sol";
 import {TickMath} from "src/math/TickMath.sol";

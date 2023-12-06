@@ -3,10 +3,10 @@ pragma solidity >=0.8.10;
 
 import "forge-std/Test.sol";
 import "forge-std/StdUtils.sol";
-import {Test2} from "mgv_lib/Test2.sol";
+import {Test2} from "@mgv/lib/Test2.sol";
 import {ForkFactory} from "./utils/ForkFactory.sol";
-import {GenericFork} from "mgv_test/lib/forks/Generic.sol";
-import {IERC20} from "mgv_src/MgvLib.sol";
+import {GenericFork} from "@mgv/test/lib/forks/Generic.sol";
+import {IERC20} from "@mgv/src/core/MgvLib.sol";
 import {DexUniV3} from "src/DexLogic/DexUniV3.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";

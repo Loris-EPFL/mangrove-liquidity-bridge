@@ -4,9 +4,9 @@ pragma solidity >=0.8.10;
 import "forge-std/Test.sol";
 import {LiquidityBridgeContext} from "./utils/LiquidityBridgeContext.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
-import {MgvStructs} from "mgv_src/MgvLib.sol";
+import {MgvStructs} from "@mgv/src/core/MgvLib.sol";
 import {DexFix} from "src/DexLogic/DexFix.sol";
-import {IERC20} from "mgv_src/MgvLib.sol";
+import {IERC20} from "@mgv/src/core/MgvLib.sol";
 
 contract LiquidityBridgeFixTest is LiquidityBridgeContext {
     function setUp() public override {

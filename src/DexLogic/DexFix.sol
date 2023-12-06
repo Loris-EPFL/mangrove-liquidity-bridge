@@ -1,9 +1,9 @@
 pragma solidity >=0.8.10;
 
-//import {IERC20} from "mgv_src/MgvLib.sol";
+//import {IERC20} from "@mgv/src/core/MgvLib.sol";
 import {IDexLogic} from "./IDexLogic.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
-import {IERC20} from "mgv_src/MgvLib.sol";
+import {IERC20} from "@mgv/src/core/MgvLib.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 
 contract DexFix is IDexLogic {

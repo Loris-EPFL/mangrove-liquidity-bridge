@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity >=0.8.10;
 
-import {IERC20} from "mgv_src/MgvLib.sol";
+import {IERC20} from "@mgv/src/core/MgvLib.sol";
 import {IDexLogic} from "./IDexLogic.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {LiquidityManager} from "src/univ3/LiquidityManager.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import {MathLib} from "src/math/MathLib.sol";
-import {AccessControlled} from "mgv_src/strategies/utils/AccessControlled.sol";
+import {AccessControlled} from "@mgv-strats/src/strategies/utils/AccessControlled.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 
 contract DexUniV3 is LiquidityManager, IDexLogic, AccessControlled {

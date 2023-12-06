@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity >=0.8.10;
-import "mgv_src/strategies/offer_maker/abstract/Direct.sol";
-import "mgv_src/strategies/routers/SimpleRouter.sol";
-import {MgvLib, MgvStructs} from "mgv_src/MgvLib.sol";
+import "@mgv-strats/src/strategies/offer_maker/abstract/Direct.sol";
+import "@mgv-strats/src/strategies/routers/SimpleRouter.sol";
+import {MgvLib, MgvStructs} from "@mgv/src/core/MgvLib.sol";
 import {IDexLogic} from "src/DexLogic/IDexLogic.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
