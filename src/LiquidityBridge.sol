@@ -2,10 +2,13 @@
 pragma solidity >=0.8.10;
 import "@mgv-strats/src/strategies/offer_maker/abstract/Direct.sol";
 import "@mgv-strats/src/strategies/routers/SimpleRouter.sol";
-import {MgvLib, MgvStructs} from "@mgv/src/core/MgvLib.sol";
+import "@mgv/src/periphery/MgvReader.sol";
+import {MgvLib} from "@mgv/src/core/MgvLib.sol";
+import {tickFromVolumes} from "@mgv/lib/core/TickLib.sol";
 import {IDexLogic} from "src/DexLogic/IDexLogic.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
+import "@prb/math/casting/Uint256.sol";
 
 // __lastLook__(order);
 //  --> Invoke hook that implements a last look check during execution - it may renege on trade by reverting.
@@ -19,6 +22,13 @@ import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 contract LiquidityBridge is Direct {
     IERC20 public immutable BASE;
     IERC20 public immutable QUOTE;
+    bool isDeployed = false;
+    uint tickSpacing = 1;
+
+    // Defined by the previous things.
+    OLKey public immutable olKeyB; //(base, quote)
+    OLKey public immutable olKeyQ; //(quote, base)
+
     ERC20Normalizer private immutable N;
 
     UD60x18 private quoteAmount;
@@ -39,6 +49,19 @@ contract LiquidityBridge is Direct {
         // SimpleRouter takes promised liquidity from admin's address (wallet)
         BASE = base;
         QUOTE = quote;
+
+        olKeyB = toOLKey(Market({
+            tkn0: BASE, 
+            tkn01: QUOTE, 
+            tickSpacing: tickSpacing
+        }));
+
+        olKeyQ = toOLKey(Market({
+            tkn0: QUOTE, 
+            tkn01: BASE, 
+            tickSpacing: tickSpacing
+        }));
+
         N = new ERC20Normalizer();
         quoteAmount = quoteAmount_;
         setSpreadRatio(spreadRatio_);
@@ -104,11 +127,7 @@ contract LiquidityBridge is Direct {
         spreadRatio = spreadGeo_;
     }
 
-    // TODO : rename to newOffers
-    function newLiquidityOffers(
-        uint askPivotId,
-        uint bidPivotId
-    ) external payable onlyAdmin returns (uint, uint) {
+    function newLiquidityOffers() external payable onlyAdmin returns (uint, uint) {
         // there is a cost of being paternalistic here, we read MGV storage
         // an offer can be in 4 states:
         // - not on mangrove (never has been)
@@ -117,14 +136,9 @@ contract LiquidityBridge is Direct {
         // MGV.retractOffer(..., deprovision:bool)
         // deprovisioning an offer (via MGV.retractOffer) credits maker balance on Mangrove (no native token transfer)
         // if maker wishes to retrieve native tokens it should call MGV.withdraw (and have a positive balance)
-        require(
-            !MGV.isLive(MGV.offers(address(BASE), address(QUOTE), askId)),
-            "LiquidityBridge/askAlreadyActive"
-        );
-        require(
-            !MGV.isLive(MGV.offers(address(QUOTE), address(BASE), bidId)),
-            "LiquidityBridge/bidAlreadyActive"
-        );
+        
+        //TOFIX: this
+        require(!isDeployed);
         // FIXME the above requirements are not enough because offerId might be live on another base, stable market
         UD60x18 midPrice = dex.currentPrice(address(BASE), address(QUOTE));
         uint notNormWantAmount;
@@ -136,17 +150,17 @@ contract LiquidityBridge is Direct {
             quoteAmount.div(midPrice).div(spreadRatio).intoUint256()
         );
 
+        int tick = tickFromVolumes(notNormWantAmount, notNormGiveAmount);
+        
         (askId, ) = _newOffer(
             OfferArgs({
-                outbound_tkn: BASE,
-                gives: notNormGiveAmount,
-                inbound_tkn: QUOTE,
-                wants: notNormWantAmount,
-                gasreq: offerGasreq(),
-                gasprice: 0,
-                pivotId: askPivotId,
-                fund: msg.value,
-                noRevert: false
+            olKey: olKeyB, 
+            tick: tick, 
+            gives: notNormGiveAmount, 
+            gasreq: offerGasreq(), 
+            gasprice: 0, 
+            fund: msg.value, 
+            noRevert: false
             })
         );
 
@@ -155,22 +169,22 @@ contract LiquidityBridge is Direct {
             quoteAmount.div(midPrice).mul(spreadRatio).intoUint256()
         );
         notNormGiveAmount = N.denormalize(QUOTE, quoteAmount.intoUint256());
+        
+        tick = tickFromVolumes(notNormWantAmount, notNormGiveAmount);
         // no need to fund this second call for provision
         // since the above call should be enough
         (bidId, ) = _newOffer(
             OfferArgs({
-                outbound_tkn: QUOTE,
-                gives: notNormGiveAmount,
-                inbound_tkn: BASE,
-                wants: notNormWantAmount,
-                gasreq: offerGasreq(),
-                gasprice: 0,
-                pivotId: bidPivotId,
-                fund: 0,
-                noRevert: false
+            olKey: olKeyQ, 
+            tick: tick, 
+            gives: notNormGiveAmount, 
+            gasreq: offerGasreq(), 
+            gasprice: 0, 
+            fund: 0, 
+            noRevert: false
             })
         );
-
+        isDeployed = true;
         return (askId, bidId);
     }
 
@@ -180,36 +194,24 @@ contract LiquidityBridge is Direct {
         uint notNormWantAmount;
         uint notNormGiveAmount;
 
-        MgvStructs.OfferPacked askOffer = MGV.offers(
-            address(BASE),
-            address(QUOTE),
-            askId
-        );
-
         notNormWantAmount = N.denormalize(QUOTE, quoteAmount.intoUint256());
         notNormGiveAmount = N.denormalize(
             BASE,
             quoteAmount.div(midPrice).div(spreadRatio).intoUint256()
         );
+
+        int tick = tickFromVolumes(offersVariables.notNormWantAmount, offersVariables.notNormGiveAmount);
+
         super._updateOffer(
             OfferArgs({
-                outbound_tkn: BASE,
-                inbound_tkn: QUOTE,
-                wants: N.denormalize(QUOTE, quoteAmount.intoUint256()),
-                gives: notNormGiveAmount,
-                gasreq: offerGasreq(),
-                gasprice: 0,
-                fund: 0,
-                pivotId: askOffer.next(),
-                noRevert: false
-            }),
-            askId
-        );
-
-        MgvStructs.OfferPacked bidOffer = MGV.offers(
-            address(QUOTE),
-            address(BASE),
-            bidId
+                olKey: olKeyB, 
+                tick: tick, 
+                gives: offersVariables.notNormGiveAmount, 
+                gasreq: offerGasreq(), 
+                gasprice: 0, 
+                fund: 0, 
+                noRevert: false}),
+            offersVariables.askId
         );
 
         notNormWantAmount = N.denormalize(
@@ -217,21 +219,17 @@ contract LiquidityBridge is Direct {
             quoteAmount.div(midPrice).mul(spreadRatio).intoUint256()
         );
         notNormGiveAmount = N.denormalize(QUOTE, quoteAmount.intoUint256());
+        tick = tickFromVolumes(notNormWantAmount, notNormGiveAmount);
+        
         super._updateOffer(
             OfferArgs({
-                outbound_tkn: QUOTE,
-                inbound_tkn: BASE,
-                wants: N.denormalize(
-                    BASE,
-                    quoteAmount.div(midPrice).mul(spreadRatio).intoUint256()
-                ),
-                gives: notNormGiveAmount,
-                gasreq: offerGasreq(),
-                gasprice: 0,
-                pivotId: bidOffer.next(),
-                fund: 0,
-                noRevert: false
-            }),
+                olKey: olKeyQ, 
+                tick: tick, 
+                gives: notNormGiveAmount, 
+                gasreq: offerGasreq(), 
+                gasprice: 0, 
+                fund: 0, 
+                noRevert: false}),
             bidId
         );
     }
@@ -257,25 +255,22 @@ contract LiquidityBridge is Direct {
     }
 
     function retractOffer(
-        IERC20 outbound_tkn,
-        IERC20 inbound_tkn,
+        OLKey olKey,
         uint offerId,
         bool deprovision
     ) public adminOrCaller(address(MGV)) returns (uint freeWei) {
-        return _retractOffer(outbound_tkn, inbound_tkn, offerId, deprovision);
+        return _retractOffer(olKey, offerId, deprovision);
     }
 
     function retractOffers(bool deprovision) external {
         uint freeWei = retractOffer({
-            outbound_tkn: BASE,
-            inbound_tkn: QUOTE,
+            olKey: olKeyB,
             offerId: askId,
             deprovision: deprovision
         });
 
         freeWei += retractOffer({
-            outbound_tkn: QUOTE,
-            inbound_tkn: BASE,
+            olKey: olKeyQ,
             offerId: bidId,
             deprovision: deprovision
         });
@@ -292,15 +287,15 @@ contract LiquidityBridge is Direct {
     function __lastLook__(
         MgvLib.SingleOrder calldata order
     ) internal override returns (bytes32) {
-        if (order.wants == 0) {
+        if (order.takerWants == 0) {
             return "TakerWantsZero";
         }
 
         dex.swap(
-            order.inbound_tkn,
-            order.outbound_tkn,
-            ud(N.normalize(IERC20(order.inbound_tkn), order.gives)),
-            ud(N.normalize(IERC20(order.outbound_tkn), order.wants))
+            order.olKey.inbound_tkn,
+            order.olKey.outbound_tkn,
+            ud(N.normalize(IERC20(order.olKey.inbound_tkn), order.gives)),    
+            ud(N.normalize(IERC20(order.olKey.outbound_tkn), order.takerWants))
         );
     }
 

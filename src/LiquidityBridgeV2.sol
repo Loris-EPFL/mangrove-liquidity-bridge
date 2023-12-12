@@ -28,7 +28,6 @@ contract LiquidityBridge is Direct {
     OLKey public immutable olKeyB; //(base, quote)
     OLKey public immutable olKeyQ; //(quote, base)
 
-
     // Parameters of Multi offers.
     ERC20Normalizer private immutable N;
     UD60x18 private quoteAmount;
@@ -139,10 +138,8 @@ contract LiquidityBridge is Direct {
     }
 
     // TOFIX: delete pivot id here
-    function deployMultiOffers(uint offersNumber, uint askPivotId,
-        uint bidPivotId) public payable onlyAdmin returns (uint, uint) {
+    function deployMultiOffers(uint offersNumber) public payable onlyAdmin returns (uint, uint) {
             require(incrementValue > 0, "Increment need to be non zero.");
-            
             for (uint i = 0; i < offersNumber; i++) {  
                 newLiquidityOffers(100 * (10 + i * incrementValue ) / 10 ); 
             }
@@ -331,7 +328,7 @@ contract LiquidityBridge is Direct {
 
         if (repost_status == "posthook/reposted") {} else {
             // repost failed or offer was entirely taken
-            if (order.outbound_tkn == address(BASE)) // ask
+            if (order.olKey.outbound_tkn == address(BASE)) // ask
                 refreshDoubleOffer(order.offerId, 0);
             else {                          // bid
                 refreshDoubleOffer(order.offerId, 1);
@@ -341,8 +338,7 @@ contract LiquidityBridge is Direct {
     }
 
     function retractOffer(
-        IERC20 outbound_tkn,
-        IERC20 inbound_tkn,
+        OLKey olKey,
         uint offerId,
         bool deprovision
     ) public adminOrCaller(address(MGV)) returns (uint freeWei) {
@@ -365,7 +361,7 @@ contract LiquidityBridge is Direct {
                 offerId: offersDoublet[i].bidId,
                 deprovision: deprovision
             });
-            
+
             offersDoublet.pop();
         }
 
@@ -387,10 +383,10 @@ contract LiquidityBridge is Direct {
         }
 
         dex.swap(
-            order.inbound_tkn,
-            order.outbound_tkn,
-            ud(N.normalize(IERC20(order.inbound_tkn), order.gives)),
-            ud(N.normalize(IERC20(order.outbound_tkn), order.wants))
+            order.olKey.inbound_tkn,
+            order.olKey.outbound_tkn,
+            ud(N.normalize(IERC20(order.olKey.inbound_tkn), order.gives)),    
+            ud(N.normalize(IERC20(order.olKey.outbound_tkn), order.takerWants))
         );
     }
 
