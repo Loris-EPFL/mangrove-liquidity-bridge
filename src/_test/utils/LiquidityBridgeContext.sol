@@ -10,13 +10,17 @@ import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import {LiquidityBridge} from "src/LiquidityBridge.sol";
 import {IMangrove} from "@mgv/src/IMangrove.sol";
-import {MgvStructs} from "@mgv/src/core/MgvLib.sol";
+import "@mgv/src/periphery/MgvReader.sol";
+import {MgvLib} from "@mgv/src/core/MgvLib.sol";
+import {TickLib} from "@mgv/lib/core/TickLib.sol";
 import {IDexLogic} from "src/DexLogic/IDexLogic.sol";
 import {DexFix} from "src/DexLogic/DexFix.sol";
 
 abstract contract LiquidityBridgeContext is Test2 {
     GenericFork fork;
     IMangrove mgv;
+    OLKey public olKeyB; 
+    OLKey public olKeyQ;
 
     IERC20 base;
     IERC20 quote;
@@ -25,6 +29,7 @@ abstract contract LiquidityBridgeContext is Test2 {
     IDexLogic dex;
 
     ERC20Normalizer N;
+    uint tickSpacing;
 
     address alice;
     address larry;
@@ -35,6 +40,7 @@ abstract contract LiquidityBridgeContext is Test2 {
 
     function setUp() public virtual {
         N = new ERC20Normalizer();
+        tickSpacing = 1;
 
         fork = ForkFactory.getFork();
         fork.setUp();
@@ -43,6 +49,19 @@ abstract contract LiquidityBridgeContext is Test2 {
         larry = freshAddress("larry");
 
         setTokens();
+
+        olKeyB = toOLKey(Market({
+            tkn0: address(base), 
+            tkn1: address(quote), 
+            tickSpacing: tickSpacing
+        }));
+
+        olKeyQ = toOLKey(Market({
+            tkn0: address(quote), 
+            tkn1: address(base), 
+            tickSpacing: tickSpacing
+        }));
+        
         setMangrove();
 
         setDex();
@@ -93,7 +112,7 @@ abstract contract LiquidityBridgeContext is Test2 {
             mgv.balanceOf(address(bridge))
         );
 
-        (askId, bidId) = bridge.newLiquidityOffers(0, 0);
+        (askId, bidId) = bridge.newLiquidityOffers();
         console2.log(
             "bridge balance after new offer",
             mgv.balanceOf(address(bridge))
@@ -107,14 +126,14 @@ abstract contract LiquidityBridgeContext is Test2 {
 
     function getAskOffer(
         uint askId
-    ) public view returns (MgvStructs.OfferPacked) {
-        return mgv.offers(address(base), address(quote), askId);
+    ) public view returns (Offer) {
+        return mgv.offers(olKeyB, askId);
     }
 
     function getBidOffer(
         uint bidId
-    ) public view returns (MgvStructs.OfferPacked) {
-        return mgv.offers(address(quote), address(base), bidId);
+    ) public view returns (Offer) {
+        return mgv.offers(olKeyQ, bidId);
     }
 
     function assertOffer(
@@ -122,10 +141,10 @@ abstract contract LiquidityBridgeContext is Test2 {
         UD60x18 offer_wants,
         address token_out,
         UD60x18 offer_gives,
-        MgvStructs.OfferPacked offer
+        Offer offer
     ) private {
         assertEq(
-            offer.wants(),
+            offer.wants(), 
             N.denormalize(IERC20(token_in), offer_wants.unwrap())
         );
         assertEq(
@@ -139,7 +158,7 @@ abstract contract LiquidityBridgeContext is Test2 {
         UD60x18 offer_gives,
         uint askId
     ) public {
-        MgvStructs.OfferPacked offer = getAskOffer(askId);
+        Offer offer = getAskOffer(askId);
 
         assertOffer(
             address(quote),
@@ -155,7 +174,7 @@ abstract contract LiquidityBridgeContext is Test2 {
         UD60x18 offer_gives,
         uint bidId
     ) public {
-        MgvStructs.OfferPacked offer = getBidOffer(bidId);
+        Offer offer = getBidOffer(bidId);
 
         assertOffer(
             address(base),
@@ -300,7 +319,10 @@ abstract contract LiquidityBridgeContext is Test2 {
             mgv.balanceOf(address(bridge))
         );
     }
-
+    // Snipe is not possible anymore in mgv-v2
+    // TOFIX: need to be replaced by market order
+    
+    /* 
     function testSnipeAskGoodPrice() public {
         UD60x18 bridgedQuoteAmount = ud(1000e18);
         UD60x18 spreadGeo = ud(1010e15);
@@ -367,7 +389,7 @@ abstract contract LiquidityBridgeContext is Test2 {
         assertEq(base.balanceOf(address(bridge)), 0);
         assertEq(quote.balanceOf(address(bridge)), 0);
     }
-
+    
     function testMultipleSnipeAskGoodPrice() public {
         UD60x18 bridgedQuoteAmount = ud(1000e18);
         UD60x18 spreadGeo = ud(1010e15);
@@ -433,6 +455,7 @@ abstract contract LiquidityBridgeContext is Test2 {
             assertEq(quote.balanceOf(address(bridge)), 0);
         }
     }
+    
 
     function testSnipeBidGoodPrice() public {
         UD60x18 bridgedQuoteAmount = ud(10000e18);
@@ -497,6 +520,7 @@ abstract contract LiquidityBridgeContext is Test2 {
         assertEq(base.balanceOf(address(bridge)), 0);
         assertEq(quote.balanceOf(address(bridge)), 0);
     }
+    
 
     function testTakerWantsZero() public {
         UD60x18 bridgedQuoteAmount = ud(1000e18);
@@ -571,4 +595,5 @@ abstract contract LiquidityBridgeContext is Test2 {
         assertEq(base.balanceOf(address(bridge)), 0);
         assertEq(quote.balanceOf(address(bridge)), 0);
     }
+    */
 }

@@ -7,21 +7,34 @@ import {ForkFactory} from "src/_test/utils/ForkFactory.sol";
 import {IERC20} from "@mgv/src/core/MgvLib.sol";
 import {GenericFork} from "@mgv/test/lib/forks/Generic.sol";
 import {MangroveTest} from "@mgv/test/lib/MangroveTest.sol";
+import {OLKey} from "@mgv/src/core/MgvLib.sol";
+import {MgvReader, toOLKey, Market} from "@mgv/src/periphery/MgvReader.sol";
 import {LiquidityBridge} from "src/LiquidityBridge.sol";
 import {IMangrove} from "@mgv/src/IMangrove.sol";
-import {AbstractMangrove} from "@mgv/src/AbstractMangrove.sol"; //TOFIX: DELETE ABSTRACTMANGROVE
 import {MgvReader} from "@mgv/src/periphery/MgvReader.sol";
-import {MgvStructs} from "@mgv/src/core/MgvLib.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 
 contract MgvTestViewer is MangroveTest {
-    function setUp(AbstractMangrove mgv_, MgvReader reader_) public {
+    function setUp(IMangrove mgv_, MgvReader reader_) public {
         mgv = mgv_;
         reader = reader_;
+        /*
+        olKeyB = toOLKey(Market({
+            tkn0: address(base), 
+            tkn1: address(quote), 
+            tickSpacing: 1
+        }));
+
+        olKeyQ = toOLKey(Market({
+            tkn0: address(quote), 
+            tkn1: address(base), 
+            tickSpacing: 1
+        }));
+        */
     }
 
-    function printOB(address base, address quote) public view {
-        super.printOrderBook(base, quote);
+    function printOB(OLKey memory olKey) public view {
+        super.printOfferList(olKey);
     }
 }
 
@@ -32,6 +45,8 @@ contract BridgeCheckScript is Test2 {
     IERC20 base;
     IERC20 quote;
     LiquidityBridge bridge;
+    OLKey olKeyB;
+    OLKey olKeyQ;
 
     function setUp() public {
         fork = ForkFactory.getFork();
@@ -42,6 +57,18 @@ contract BridgeCheckScript is Test2 {
 
         base = IERC20(fork.get("USDC"));
         quote = IERC20(fork.get("USDT"));
+
+        olKeyB = toOLKey(Market({
+            tkn0: address(base), 
+            tkn1: address(quote), 
+            tickSpacing: 1
+        }));
+
+        olKeyQ = toOLKey(Market({
+            tkn0: address(quote), 
+            tkn1: address(base), 
+            tickSpacing: 1
+        }));
     }
 
     function run() public pure {
@@ -51,61 +78,10 @@ contract BridgeCheckScript is Test2 {
     // forge script BridgeCheckScript --tc BridgeCheckScript -f $ANVIL_URL -vv -s "displayOB()"
     function displayOB() public {
         MgvTestViewer mgvTest = new MgvTestViewer();
-        mgvTest.setUp(AbstractMangrove(payable(address(mgv))), reader);
+        mgvTest.setUp(IMangrove(payable(address(mgv))), reader);
 
-        mgvTest.printOB(address(base), address(quote));
+        // mgvTest.printOB(olKeyB);
 
-        mgvTest.printOB(address(quote), address(base));
-    }
-
-    function snipeOffer(IERC20 ofr_tkn, IERC20 req_tkn, uint offerId) public {
-        MgvStructs.OfferPacked offer = mgv.offers(
-            address(ofr_tkn),
-            address(req_tkn),
-            offerId
-        );
-
-        console2.log("Offer wants", offer.wants());
-        console2.log("Offer gives", offer.gives());
-
-        uint aow = offer.wants();
-        deal(address(req_tkn), address(this), aow * 4);
-        req_tkn.approve(address(mgv), type(uint).max);
-
-        // [[offerId, minTakerWants, maxTakerGives, gasReqPermitted]]
-        uint[4][] memory snipeParams = new uint[4][](1);
-        snipeParams[0] = [offerId, 0, 0, type(uint).max];
-
-        uint[] memory takerWants = dynamic([0, aow / 2, aow]);
-
-        uint success;
-        for (uint i = 0; i < takerWants.length; i++) {
-            console2.log("Snipe taker wants", takerWants[i]);
-
-            snipeParams[0][2] = takerWants[i];
-
-            (success, , , , ) = mgv.snipes(
-                address(ofr_tkn),
-                address(req_tkn),
-                snipeParams,
-                false
-            );
-            console2.log("Snipe success", success);
-        }
-    }
-
-    function snipeAsk() public {
-        snipeOffer(base, quote, 234);
-    }
-
-    function snipeBid() public {
-        snipeOffer(quote, base, 234);
-    }
-
-    function snipeOffers() public {
-        console2.log("==> Sniping Ask...");
-        snipeAsk();
-        console2.log("==> Sniping Bid...");
-        snipeBid();
+        // mgvTest.printOB(olKeyQ);
     }
 }

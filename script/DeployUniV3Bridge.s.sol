@@ -6,8 +6,10 @@ import {ForkFactory} from "src/_test/utils/ForkFactory.sol";
 import {IERC20} from "@mgv/src/core/MgvLib.sol";
 import {GenericFork} from "@mgv/test/lib/forks/Generic.sol";
 import {IMangrove} from "@mgv/src/IMangrove.sol";
-import {MgvReader} from "@mgv/src/periphery/MgvReader.sol";
-import {MgvStructs} from "@mgv/src/core/MgvLib.sol";
+import {MgvReader, toOLKey, Market} from "@mgv/src/periphery/MgvReader.sol";
+import {MgvLib, OLKey} from "@mgv/src/core/MgvLib.sol";
+import {TickLib} from "@mgv/lib/core/TickLib.sol";
+import {Local} from "@mgv/src/preprocessed/Local.post.sol";
 import {IDexLogic} from "src/DexLogic/IDexLogic.sol";
 import {DexUniV3} from "src/DexLogic/DexUniV3.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
@@ -25,6 +27,7 @@ contract DeployUniV3BridgeScript is Script {
     IERC20 public base;
     IERC20 public quote;
     uint24 public fee = 100;
+    uint8 public tickSpacing = 1;
 
     address chief;
 
@@ -125,13 +128,25 @@ contract DeployUniV3BridgeScript is Script {
 
         checkDex();
     }
-
+    
     function checkMangrove() public {
-        MgvStructs.LocalPacked localAsk;
-        MgvStructs.LocalPacked localBid;
+        Local localAsk;
+        Local localBid;
 
-        localAsk = reader.local(address(base), address(quote));
-        localBid = reader.local(address(quote), address(base));
+        OLKey memory olKeyB = toOLKey(Market({
+            tkn0: address(base), 
+            tkn1: address(quote), 
+            tickSpacing: tickSpacing
+        }));
+
+        OLKey memory olKeyQ = toOLKey(Market({
+            tkn0: address(quote), 
+            tkn1: address(base), 
+            tickSpacing: tickSpacing
+        }));
+
+        localAsk = mgv.local(olKeyB);
+        localBid = mgv.local(olKeyQ);
 
         require(localAsk.active(), "Local ASK not active");
         require(localBid.active(), "Local BID not active");
@@ -140,22 +155,24 @@ contract DeployUniV3BridgeScript is Script {
         // - OB active on both sides (ASK & BID)
         // -
         // kpi 1 : density, impact on quoteAmount
-        MgvStructs.LocalPacked local;
-        local = reader.local(address(base), address(quote));
+        Local local;
+        local = mgv.local(olKeyB);
+        /*
         console2.log("Local ASK density", local.density());
         console2.log("Local ASK active", local.active());
         console2.log("Local ASK fee", local.fee());
         console2.log("Local ASK offer.gas_base", local.offer_gasbase());
 
-        local = reader.local(address(quote), address(base));
+        local = mgv.local(olKeyQ);
         console2.log("Local BID density", local.density());
         console2.log("Local BID active", local.active());
         console2.log("Local BID fee", local.fee());
         console2.log("Local BID offer.gas_base", local.offer_gasbase());
-
+        */
+        /*
         uint volume;
         UD60x18 volumeNorm;
-
+        
         volume = reader.minVolume(address(base), address(quote), 500_000);
         volumeNorm = ud(N.normalize(base, volume));
         console2.log("Min ASK volume", volumeNorm.unwrap());
@@ -163,6 +180,7 @@ contract DeployUniV3BridgeScript is Script {
         volume = reader.minVolume(address(quote), address(base), 500_000);
         volumeNorm = ud(N.normalize(quote, volume));
         console2.log("Min BID volume", volumeNorm.unwrap());
+        */
     }
 
     function checkDex() public view {

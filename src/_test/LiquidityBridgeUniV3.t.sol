@@ -4,7 +4,6 @@ pragma solidity >=0.8.10;
 import "forge-std/Test.sol";
 import {LiquidityBridgeContext} from "./utils/LiquidityBridgeContext.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
-import {MgvStructs} from "@mgv/src/core/MgvLib.sol";
 import {UniV3PoolBuilder} from "./utils/UniV3PoolBuilder.sol";
 import {DexUniV3} from "src/DexLogic/DexUniV3.sol";
 import {IERC20} from "@mgv/src/core/MgvLib.sol";

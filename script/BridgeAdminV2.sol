@@ -5,10 +5,12 @@ import {Script, console2} from "forge-std/Script.sol";
 import {ForkFactory} from "src/_test/utils/ForkFactory.sol";
 import {IERC20} from "@mgv/src/core/MgvLib.sol";
 import {GenericFork} from "@mgv/test/lib/forks/Generic.sol";
+import {MgvReader, toOLKey, Market} from "@mgv/src/periphery/MgvReader.sol";
+import {MgvLib, OLKey} from "@mgv/src/core/MgvLib.sol";
+import {TickLib} from "@mgv/lib/core/TickLib.sol";
 import {LiquidityBridge} from "src/LiquidityBridgeV2.sol";
 import {IMangrove} from "@mgv/src/IMangrove.sol";
 import {MgvReader} from "@mgv/src/periphery/MgvReader.sol";
-import {MgvStructs} from "@mgv/src/core/MgvLib.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 
 contract BridgeAdminScript is Script {
@@ -23,6 +25,10 @@ contract BridgeAdminScript is Script {
     IERC20 quote;
     LiquidityBridge bridge;
 
+     // Defined by the previous things.
+    OLKey public  olKeyB; //(base, quote)
+    OLKey public  olKeyQ; //(quote, base)
+
     function setUp() public {
         fork = ForkFactory.getFork();
         fork.setUp();
@@ -33,6 +39,18 @@ contract BridgeAdminScript is Script {
         chief = vm.envAddress("CHIEF");
         base = IERC20(fork.get("USDC"));
         quote = IERC20(fork.get("USDT"));
+
+        olKeyB = toOLKey(Market({
+            tkn0: address(base), 
+            tkn1: address(quote), 
+            tickSpacing: 1
+        }));
+
+        olKeyQ = toOLKey(Market({
+            tkn0: address(quote), 
+            tkn1: address(base), 
+            tickSpacing: 1
+        }));
 
         bridge = LiquidityBridge(payable(vm.envAddress("BRIDGE")));
     }
@@ -62,9 +80,8 @@ contract BridgeAdminScript is Script {
         console2.log("Taker quote balance", quote.balanceOf(taker));
         console2.log("Taker base balance", base.balanceOf(taker));
 
-        mgv.marketOrder({
-            outbound_tkn: address(base),
-            inbound_tkn: address(quote),
+        mgv.marketOrderByVolume({
+            olKey: olKeyB,
             takerWants: 100_000000,
             takerGives: 101_000000,
             fillWants: true
@@ -99,7 +116,7 @@ contract BridgeAdminScript is Script {
         bridge.activate(tokens);
 
         // newoffers
-        bridge.deployMultiOffers(5, 0, 0);
+        bridge.deployMultiOffers(5);
 
         bridge.retractOffers(true);
     }
@@ -122,7 +139,7 @@ contract BridgeAdminScript is Script {
 
     function newOffers() public {
         vm.startBroadcast();
-        bridge.deployMultiOffers(15, 0, 0);
+        bridge.deployMultiOffers(15);
     }
 
     function retractOffers() public {

@@ -3,8 +3,9 @@ pragma solidity >=0.8.10;
 import "@mgv-strats/src/strategies/offer_maker/abstract/Direct.sol";
 import "@mgv-strats/src/strategies/routers/SimpleRouter.sol";
 import "@mgv/src/periphery/MgvReader.sol";
-import {MgvLib} from "@mgv/src/core/MgvLib.sol";
-import {tickFromVolumes} from "@mgv/lib/core/TickLib.sol";
+import {MgvReader, toOLKey, Market} from "@mgv/src/periphery/MgvReader.sol";
+import {MgvLib, OLKey} from "@mgv/src/core/MgvLib.sol";
+import {TickLib} from "@mgv/lib/core/TickLib.sol";
 import {IDexLogic} from "src/DexLogic/IDexLogic.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
@@ -25,8 +26,8 @@ contract LiquidityBridge is Direct {
     uint tickSpacing = 1;
 
     // Defined by the previous things.
-    OLKey public immutable olKeyB; //(base, quote)
-    OLKey public immutable olKeyQ; //(quote, base)
+    OLKey public olKeyB; //(base, quote)
+    OLKey public olKeyQ; //(quote, base)
 
     // Parameters of Multi offers.
     ERC20Normalizer private immutable N;
@@ -48,21 +49,21 @@ contract LiquidityBridge is Direct {
         uint incrementValueCon,
         address dexLogic,
         address admin
-    ) Direct(mgv, NO_ROUTER, 400_000, admin) {
-        // SimpleRouter takes promised liquidity from admin's address (wallet)
+    ) Direct(mgv, NO_ROUTER, admin) {
+        // SimpleRouter takes promised liquidity from axdmin's address (wallet)
         BASE = base;
         QUOTE = quote;
 
         olKeyB = toOLKey(Market({
-            tkn0: BASE, 
-            tkn01: QUOTE, 
-            tickSpacing: tickSpacing
+            tkn0: address(base), 
+            tkn1: address(quote), 
+            tickSpacing: 1
         }));
 
         olKeyQ = toOLKey(Market({
-            tkn0: QUOTE, 
-            tkn01: BASE, 
-            tickSpacing: tickSpacing
+            tkn0: address(quote), 
+            tkn1: address(base), 
+            tickSpacing: 1
         }));
 
         N = new ERC20Normalizer();
@@ -138,7 +139,7 @@ contract LiquidityBridge is Direct {
     }
 
     // TOFIX: delete pivot id here
-    function deployMultiOffers(uint offersNumber) public payable onlyAdmin returns (uint, uint) {
+    function deployMultiOffers(uint offersNumber) public payable onlyAdmin returns (uint) {
             require(incrementValue > 0, "Increment need to be non zero.");
             for (uint i = 0; i < offersNumber; i++) {  
                 newLiquidityOffers(100 * (10 + i * incrementValue ) / 10 ); 
@@ -194,14 +195,14 @@ contract LiquidityBridge is Direct {
         );
 
         // wants, gives
-        int tick = tickFromVolumes(offersVariables.notNormWantAmount, offersVariables.notNormGiveAmount);
+        Tick tick = TickLib.tickFromVolumes(offersVariables.notNormWantAmount, offersVariables.notNormGiveAmount);
         
         (offersVariables.askId, ) = _newOffer(
             OfferArgs({
             olKey: olKeyB, 
             tick: tick, 
             gives: offersVariables.notNormGiveAmount, 
-            gasreq: offerGasreq(), 
+            gasreq: 400000, 
             gasprice: 0, 
             fund: msg.value, 
             noRevert: false
@@ -214,7 +215,7 @@ contract LiquidityBridge is Direct {
 
         offersVariables.notNormGiveAmount = N.denormalize(QUOTE, newQuoteAmount.intoUint256());
         
-        tick = tickFromVolumes(offersVariables.notNormWantAmount, offersVariables.notNormGiveAmount);
+        tick = TickLib.tickFromVolumes(offersVariables.notNormWantAmount, offersVariables.notNormGiveAmount);
         // no need to fund this second call for provision
         // since the above call should be enough
         (offersVariables.bidId, ) = _newOffer(
@@ -222,7 +223,7 @@ contract LiquidityBridge is Direct {
             olKey: olKeyQ, 
             tick: tick, 
             gives: offersVariables.notNormGiveAmount, 
-            gasreq: offerGasreq(), 
+            gasreq: 400000, 
             gasprice: 0, 
             fund: 0, 
             noRevert: false
@@ -276,14 +277,14 @@ contract LiquidityBridge is Direct {
             newQuoteAmount.div(midPrice).div(spreadRatio.mul(spreadMultiplier)).intoUint256()
         );
 
-        int tick = tickFromVolumes(offersVariables.notNormWantAmount, offersVariables.notNormGiveAmount);
+        Tick tick = TickLib.tickFromVolumes(offersVariables.notNormWantAmount, offersVariables.notNormGiveAmount);
 
         super._updateOffer(
             OfferArgs({
                 olKey: olKeyB, 
                 tick: tick, 
                 gives: offersVariables.notNormGiveAmount, 
-                gasreq: offerGasreq(), 
+                gasreq: 400000, 
                 gasprice: 0, 
                 fund: 0, 
                 noRevert: false}),
@@ -297,14 +298,14 @@ contract LiquidityBridge is Direct {
         );
 
         offersVariables.notNormGiveAmount = N.denormalize(QUOTE, newQuoteAmount.intoUint256());
-        tick = tickFromVolumes(offersVariables.notNormWantAmount, offersVariables.notNormGiveAmount);
+        tick = TickLib.tickFromVolumes(offersVariables.notNormWantAmount, offersVariables.notNormGiveAmount);
 
         super._updateOffer(
             OfferArgs({
                 olKey: olKeyQ, 
                 tick: tick, 
                 gives: offersVariables.notNormGiveAmount, 
-                gasreq: offerGasreq(), 
+                gasreq: 400000, 
                 gasprice: 0, 
                 fund: 0, 
                 noRevert: false}),
@@ -338,7 +339,7 @@ contract LiquidityBridge is Direct {
     }
 
     function retractOffer(
-        OLKey olKey,
+        OLKey memory olKey,
         uint offerId,
         bool deprovision
     ) public adminOrCaller(address(MGV)) returns (uint freeWei) {
@@ -385,7 +386,7 @@ contract LiquidityBridge is Direct {
         dex.swap(
             order.olKey.inbound_tkn,
             order.olKey.outbound_tkn,
-            ud(N.normalize(IERC20(order.olKey.inbound_tkn), order.gives)),    
+            ud(N.normalize(IERC20(order.olKey.inbound_tkn), order.takerGives)),    
             ud(N.normalize(IERC20(order.olKey.outbound_tkn), order.takerWants))
         );
     }
@@ -396,7 +397,7 @@ contract LiquidityBridge is Direct {
     ) internal override returns (bytes32) {
         // order.offerId, I need to find symetrical
            
-        if (order.olKey == olKeyB) // ask
+        if (order.olKey.inbound_tkn == olKeyB.inbound_tkn) // ask
             refreshDoubleOffer(order.offerId, 0);
         else {                     // bid
             refreshDoubleOffer(order.offerId, 1);

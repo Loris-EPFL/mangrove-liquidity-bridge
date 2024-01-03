@@ -6,8 +6,11 @@ import {MangroveTest} from "@mgv/test/lib/MangroveTest.sol";
 import {ForkFactory} from "./utils/ForkFactory.sol";
 import {GenericFork} from "@mgv/test/lib/forks/Generic.sol";
 import {UniV3PoolBuilder} from "./utils/UniV3PoolBuilder.sol";
+import {Local} from "@mgv/src/preprocessed/Local.post.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import {LiquidityBridge} from "src/LiquidityBridge.sol";
+import {MgvReader, toOLKey, Market} from "@mgv/src/periphery/MgvReader.sol";
+import {MgvLib, OLKey} from "@mgv/src/core/MgvLib.sol";
 import {IERC20} from "@mgv/src/core/MgvLib.sol";
 import {IMangrove} from "@mgv/src/IMangrove.sol";
 import {IDexLogic} from "src/DexLogic/IDexLogic.sol";
@@ -18,6 +21,9 @@ contract LiquidityBridgeDeployedMgvTest is MangroveTest {
 
     address larry;
     address taker;
+
+    OLKey public olKeyB; //(base, quote)
+    OLKey public olKeyQ;
 
     UniV3PoolBuilder poolBuilder;
     LiquidityBridge bridge;
@@ -34,9 +40,21 @@ contract LiquidityBridgeDeployedMgvTest is MangroveTest {
         options.quote.symbol = "USDC";
         options.quote.decimals = 6;
 
+        olKeyB = toOLKey(Market({
+            tkn0: address(base), 
+            tkn1: address(quote), 
+            tickSpacing: 1
+        }));
+
+        olKeyQ = toOLKey(Market({
+            tkn0: address(quote), 
+            tkn1: address(base), 
+            tickSpacing: 1
+        }));
+
         // load mangrove test context
         super.setUp();
-        setupMarket(base, quote);
+        setupMarket(mgv, olKeyB);
 
         // create users
         taker = freshAddress("maker");
@@ -44,7 +62,7 @@ contract LiquidityBridgeDeployedMgvTest is MangroveTest {
 
         setupDex();
         setupLiquidityBridge();
-        setupMakerLarry();
+        // setupMakerLarry();
         setupTaker();
     }
 
@@ -76,7 +94,7 @@ contract LiquidityBridgeDeployedMgvTest is MangroveTest {
         vm.label(address(bridge), "bridge");
 
         mgv.fund{value: 10 ether}(address(bridge));
-        bridge.newLiquidityOffers(0, 0);
+        bridge.newLiquidityOffers();
 
         IERC20[] memory tokens = new IERC20[](2);
         tokens[0] = base;
@@ -84,6 +102,7 @@ contract LiquidityBridgeDeployedMgvTest is MangroveTest {
         bridge.activate(tokens);
     }
 
+    /*
     function setupMakerLarry() private {
         deal(larry, 10 ether);
         deal($(base), larry, cash(base, 1000));
@@ -92,6 +111,19 @@ contract LiquidityBridgeDeployedMgvTest is MangroveTest {
         vm.startPrank(larry);
         base.approve(address(mgv), type(uint256).max);
         quote.approve(address(mgv), type(uint256).max);
+        /*
+        _newOffer(
+            OfferArgs({
+            olKey: olKeyB, 
+            tick: tick, 
+            gives: notNormGiveAmount, 
+            gasreq: 400000, 
+            gasprice: 0, 
+            fund: msg.value, 
+            noRevert: false
+            })
+        );
+      
 
         mgv.newOffer{value: 1 ether}({
             outbound_tkn: $(base),
@@ -113,7 +145,7 @@ contract LiquidityBridgeDeployedMgvTest is MangroveTest {
         });
         vm.stopPrank();
     }
-
+    */
     function setupTaker() private {
         deal(taker, 10 ether);
         deal($(base), taker, cash(base, 10));
@@ -121,40 +153,45 @@ contract LiquidityBridgeDeployedMgvTest is MangroveTest {
     }
 
     function testInitMangroveOB() public {
-        printOrderBook($(base), $(quote));
-        printOrderBook($(quote), $(base));
+        printOfferList(olKeyB);
+        printOfferList(olKeyQ);
         succeed();
     }
 
     //https://docs.mangrove.exchange/contracts/technical-references/taking-and-making-offers/taker-order/
     function testTakeAsk() public {
-        printOrderBook($(base), $(quote));
+        printOfferList(olKeyB);
 
         vm.startPrank(taker);
         quote.approve(address(mgv), type(uint256).max);
+        /*
         (uint takerGot, uint takerGave, , ) = mgv.marketOrder(
             $(base),
             $(quote),
             cash(base, 5, 2), // 0.5
             cash(quote, 1000),
             true
-        );
+        );*/
+
+        (uint takerGot, uint takerGave, , ) = mgv.marketOrderByVolume(olKeyB, cash(base, 5, 2), cash(quote, 1000), true);
         vm.stopPrank();
 
         console2.log("takerGot", takerGot);
         console2.log("takerGave", takerGave);
         console2.log("----Ask Side---");
-        printOrderBook($(base), $(quote));
+        printOfferList(olKeyB);
         console2.log("----Bid Side-----");
-        printOrderBook($(quote), $(base));
+        printOfferList(olKeyQ);
 
     }
 
     function testTakeBid() public {
-        printOrderBook($(quote), $(base));
+        printOfferList(olKeyQ);
 
         vm.startPrank(taker);
         base.approve(address(mgv), cash(base, 1));
+        (uint takerGot, uint takerGave, , ) = mgv.marketOrderByVolume(olKeyQ, cash(quote, 950), cash(base, 1), false);
+        /*
         (uint takerGot, uint takerGave, , ) = mgv.marketOrder(
             $(quote),
             $(base),
@@ -162,10 +199,11 @@ contract LiquidityBridgeDeployedMgvTest is MangroveTest {
             cash(base, 1),
             false
         );
+        */
         vm.stopPrank();
 
         console2.log("takerGot", takerGot);
         console2.log("takerGave", takerGave);
-        printOrderBook($(quote), $(base));
+        printOfferList(olKeyQ);
     }
 }
