@@ -18,5 +18,5 @@ ds-test/=node_modules/@mangrovedao/mangrove-core/lib/forge-std/lib/ds-test/src
 @uniswap/v3-core/=lib/v3-core/
 @openzeppelin/=lib/openzeppelin-contracts/contracts/
 
-forge-std/=lib/forge-std/src/
+forge-std/=node_modules/@mangrovedao/mangrove-core/lib/forge-std/src/
 ds-test/=lib/forge-std/lib/ds-test/src/

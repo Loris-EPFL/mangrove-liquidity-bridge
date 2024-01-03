@@ -1,8 +1,11 @@
 [profile.default]
 src = 'src'
 out = 'out'
+# via_ir = true
 libs = ["node_modules", "lib"]
 remappings = []
+optimizer = true
+
 fs_permissions = [{ access = "read", path = "./"}]
 
 [fmt]
@@ -20,5 +23,9 @@ out = 'out'
 # If the library is compatible with all versions,
 # you can install it with the default profile.
 libs = ['lib-0_7_6']
-optimizer = false
 solc_version = '0.7.6'
+
+
+[rpc_endpoints]
+polygon="${POLYGON_NODE_URL}"
+mumbai="${MUMBAI_NODE_URL}"
