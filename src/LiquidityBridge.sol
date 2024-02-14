@@ -25,7 +25,6 @@ contract LiquidityBridge is Direct {
     IERC20 public immutable QUOTE;
     bool isDeployed = false;
     uint tickSpacing = 1;
-    RouterParams NO_ROUTER = noRouter();
 
     // Defined by the previous things.
     OLKey public olKeyB; //(base, quote)
@@ -39,6 +38,9 @@ contract LiquidityBridge is Direct {
     uint private bidId;
     uint private askId;
 
+    //adding this to avoid build errors
+    RouterParams NO_ROUTER = noRouter();
+
     constructor(
         IMangrove mgv,
         IERC20 base,
@@ -47,7 +49,7 @@ contract LiquidityBridge is Direct {
         UD60x18 spreadRatio_,
         address dexLogic,
         address admin
-    ) Direct(mgv, NO_ROUTER, admin) {
+    ) Direct(mgv, NO_ROUTER) {
         // SimpleRouter takes promised liquidity from admin's address (wallet)
         BASE = base;
         QUOTE = quote;
@@ -70,12 +72,10 @@ contract LiquidityBridge is Direct {
         dex = IDexLogic(dexLogic);
 
         AbstractRouter router_ = new SimpleRouter();
-        setRouter(router_);
         // adding `this` to the allowed makers of `router_` to pull/push liquidity
         // Note: `reserve(admin)` needs to approve `this.router()` for base token transfer
         router_.bind(address(this));
         router_.setAdmin(admin);
-        router().setAdmin(admin);
     }
 
     /// @notice This enables the admin to withdraw tokens from the contract. Notice that only the admin can call this.
@@ -310,8 +310,8 @@ contract LiquidityBridge is Direct {
         return "posthook/offersRefreshed";
     }
 
-    function __activate__(IERC20 token) internal override {
-        super.__activate__(token);
+    function __activate__(IERC20 token) internal  {
+        super.activate(token);
         token.approve(address(dex), type(uint256).max);
     }
 }

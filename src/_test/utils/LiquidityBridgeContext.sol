@@ -121,7 +121,9 @@ abstract contract LiquidityBridgeContext is Test2 {
         IERC20[] memory tokens = new IERC20[](2);
         tokens[0] = base;
         tokens[1] = quote;
-        bridge.activate(tokens);
+        for (uint i = 0; i < tokens.length; i++) {
+           bridge.activate(tokens[i]);
+        }
     }
 
     function getAskOffer(

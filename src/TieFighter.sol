@@ -53,7 +53,7 @@ contract LiquidityBridge is Direct {
         uint incrementValueCon,
         address dexLogic,
         address admin
-    ) Direct(mgv, NO_ROUTER, admin) {
+    ) Direct(mgv, NO_ROUTER) {
         // SimpleRouter takes promised liquidity from axdmin's address (wallet)
         BASE = base;
         QUOTE = quote;
@@ -78,12 +78,10 @@ contract LiquidityBridge is Direct {
         dex = IDexLogic(dexLogic);
 
         AbstractRouter router_ = new SimpleRouter();
-        setRouter(router_);
         // adding `this` to the allowed makers of `router_` to pull/push liquidity
         // Note: `reserve(admin)` needs to approve `this.router()` for base token transfer
         router_.bind(address(this));
         router_.setAdmin(admin);
-        setAdmin(admin);
     }
 
     /// @notice This enables the admin to withdraw tokens from the contract. Notice that only the admin can call this.
@@ -208,7 +206,7 @@ contract LiquidityBridge is Direct {
         (offersVariables.askId, ) = _newOffer(
             OfferArgs({
             olKey: olKeyB, 
-            tick: tick.previous(), 
+            tick: tick, 
             gives: offersVariables.notNormGiveAmount, 
             gasreq: 400000, 
             gasprice: 0, 
@@ -229,7 +227,7 @@ contract LiquidityBridge is Direct {
         (offersVariables.bidId, ) = _newOffer(
             OfferArgs({
             olKey: olKeyQ, 
-            tick: tick.next(), 
+            tick: tick, 
             gives: offersVariables.notNormGiveAmount, 
             gasreq: 400000, 
             gasprice: 0, 
@@ -413,8 +411,8 @@ contract LiquidityBridge is Direct {
         return "posthook/offersRefreshed";
     }
 
-    function __activate__(IERC20 token) internal override {
-        super.__activate__(token);
+    function __activate__(IERC20 token) internal  {
+        super.activate(token);
         token.approve(address(dex), type(uint256).max);
     }
 }

@@ -10,6 +10,7 @@ import {IDexLogic} from "src/DexLogic/IDexLogic.sol";
 import {ERC20Normalizer} from "src/ERC20Normalizer.sol";
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import "@prb/math/casting/Uint256.sol";
+import "@mgv-strats/src/strategies/offer_forwarder/abstract/Forwarder.sol";
 
 // __lastLook__(order);
 //  --> Invoke hook that implements a last look check during execution - it may renege on trade by reverting.
@@ -24,6 +25,7 @@ contract LiquidityBridge is Direct {
     IERC20 public immutable BASE;
     IERC20 public immutable QUOTE;
     uint tickSpacing = 1;
+
 
     // Defined by the previous things.
     OLKey public olKeyB; //(base, quote)
@@ -53,7 +55,7 @@ contract LiquidityBridge is Direct {
         uint incrementValueCon,
         address dexLogic,
         address admin
-    ) Direct(mgv, NO_ROUTER, admin) {
+    ) Direct(mgv, NO_ROUTER) {
         // SimpleRouter takes promised liquidity from axdmin's address (wallet)
         BASE = base;
         QUOTE = quote;
@@ -78,12 +80,10 @@ contract LiquidityBridge is Direct {
         dex = IDexLogic(dexLogic);
 
         AbstractRouter router_ = new SimpleRouter();
-        setRouter(router_);
         // adding `this` to the allowed makers of `router_` to pull/push liquidity
         // Note: `reserve(admin)` needs to approve `this.router()` for base token transfer
         router_.bind(address(this));
         router_.setAdmin(admin);
-        setAdmin(admin);
     }
 
     /// @notice This enables the admin to withdraw tokens from the contract. Notice that only the admin can call this.
@@ -409,8 +409,8 @@ contract LiquidityBridge is Direct {
         return "posthook/offersRefreshed";
     }
 
-    function __activate__(IERC20 token) internal override {
-        super.__activate__(token);
+    function __activate__(IERC20 token) internal {
+        super.activate(token);
         token.approve(address(dex), type(uint256).max);
     }
 }

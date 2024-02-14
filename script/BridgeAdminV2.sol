@@ -94,7 +94,10 @@ contract BridgeAdminScript is Script {
         tokens[1] = quote;
 
         vm.startBroadcast();
-        bridge.activate(tokens);
+        for (uint i = 0; i < tokens.length; i++) {
+           bridge.activate(tokens[i]);
+        }
+        
     }
 
     function fund() public {
@@ -113,7 +116,9 @@ contract BridgeAdminScript is Script {
         tokens[0] = base;
         tokens[1] = quote;
 
-        bridge.activate(tokens);
+        for (uint i = 0; i < tokens.length; i++) {
+           bridge.activate(tokens[i]);
+        }
 
         // newoffers
         bridge.deployMultiOffers(5);
