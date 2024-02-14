@@ -325,7 +325,18 @@ contract LiquidityBridge is Direct {
         bytes32 makerData
     ) internal override returns (bytes32) {
         // reposts residual if any (conservative hook)
+
+         // now trying to repost residual
+        (uint newGives, Tick newTick) = __residualValues__(order); //residual value of order
+
+         if (newGives == 0 || newTick.inboundFromOutbound(newGives) == 0) { //order completely filled
+            deployMultiOffers(2); //deploy 2 offers (want and ask)
+        }
         bytes32 repost_status = super.__posthookSuccess__(order, makerData);
+
+        UD60x18 midPrice = dex.currentPrice(address(BASE), address(QUOTE)); //get the current price from dex source
+
+
 
         // write here what you want to do if not `reposted`
         // reasons for not ok are:
