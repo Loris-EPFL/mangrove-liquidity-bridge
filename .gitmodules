@@ -19,3 +19,6 @@
 [submodule "lib-0_7_6/v3-core"]
 	path = lib-0_7_6/v3-core
 	url = https://github.com/uniswap/v3-core
+[submodule "lib/mangrove-strats"]
+	path = lib/mangrove-strats
+	url = https://github.com/mangrovedao/mangrove-strats
