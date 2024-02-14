@@ -24,8 +24,7 @@
   "dependencies": {
     "@mangrovedao/mangrove.js": "2.0.0-10",
     "dotenv": "^16.1.4",
-    "ethernal": "^2.3.0",
+    "ethernal": "^0.2.3",
     "yargs": "^17.7.2"
   }
 }
-

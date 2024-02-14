@@ -39,6 +39,10 @@ contract LiquidityBridge is Direct {
     uint public offersNumberVal;
     uint incrementValue;
 
+    //adding this to avoid build errors
+    RouterParams NO_ROUTER = noRouter();
+
+
     constructor(
         IMangrove mgv,
         IERC20 base,

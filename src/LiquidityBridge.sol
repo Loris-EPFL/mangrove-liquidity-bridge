@@ -25,6 +25,7 @@ contract LiquidityBridge is Direct {
     IERC20 public immutable QUOTE;
     bool isDeployed = false;
     uint tickSpacing = 1;
+    RouterParams NO_ROUTER = noRouter();
 
     // Defined by the previous things.
     OLKey public olKeyB; //(base, quote)
@@ -74,7 +75,7 @@ contract LiquidityBridge is Direct {
         // Note: `reserve(admin)` needs to approve `this.router()` for base token transfer
         router_.bind(address(this));
         router_.setAdmin(admin);
-        setAdmin(admin);
+        router().setAdmin(admin);
     }
 
     /// @notice This enables the admin to withdraw tokens from the contract. Notice that only the admin can call this.
