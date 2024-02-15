@@ -355,6 +355,8 @@ contract LiquidityBridge is Direct {
         }
     }
 
+    
+
     function retractOffer(
         OLKey memory olKey,
         uint offerId,
