@@ -32,8 +32,7 @@ contract LiquidityBridgeDeployedMgvTest is MangroveTest {
 
     function setUp() public override {
         // load context and deployed addresses
-        fork = ForkFactory.getFork();
-        fork.setUp();
+        vm.createSelectFork(vm.rpcUrl("https://polygon-mumbai.g.alchemy.com/v2/cmy55SdtwfrzfFpbN_SSjl9ioQscFnHJ"), 16_791_458);
 
         options.base.symbol = "USDC";
         options.base.decimals = 6;

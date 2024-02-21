@@ -28,17 +28,21 @@ contract DexFixTest is Test2 {
     address alice;
 
     function setUp() public {
-        fork = ForkFactory.getFork();
-        fork.setUp();
+        
+        vm.createSelectFork(vm.rpcUrl("https://polygon-mumbai.g.alchemy.com/v2/cmy55SdtwfrzfFpbN_SSjl9ioQscFnHJ"), 16_791_458);
+
+        address USDT = 0xA02f6adc7926efeBBd59Fd43A84f4E0c0c91e832;
+        address WMATIC = 0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889;
 
         N = new ERC20Normalizer();
 
-        base = IERC20(fork.get("WMATIC"));
-        quote = IERC20(fork.get("USDT"));
+
+        base = IERC20(WMATIC);
+        quote = IERC20(USDT);
 
         dex = new DexFix(address(base), address(quote));
 
-        alice = freshAddress("alice");
+        alice = makeAddr("alice");
     }
 
     function testMintImpersonating() public {

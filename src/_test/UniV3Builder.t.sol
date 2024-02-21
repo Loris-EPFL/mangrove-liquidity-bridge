@@ -27,15 +27,26 @@ contract UniV3BuilderTest is Test {
 
     function setUp() public {
         N = new ERC20Normalizer();
-
+        console2.log("test setup");
+        vm.createSelectFork(vm.rpcUrl("https://polygon-mumbai.g.alchemy.com/v2/cmy55SdtwfrzfFpbN_SSjl9ioQscFnHJ"), 16_791_458);
+        alice = makeAddr("alice");
+        larry = makeAddr("larry");
+        /*
         fork = ForkFactory.getFork();
+        
         fork.setUp();
+
+      
 
         alice = address(0x1111);
         fork.set("alice", alice);
+          
 
         larry = address(0x2222);
         fork.set("larry", larry);
+
+          */
+        
     }
 
     function buildWithMockedTokens() public {

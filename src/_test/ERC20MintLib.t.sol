@@ -21,14 +21,15 @@ contract ERC20MintLibTest is Test2 {
     ERC20Normalizer N;
 
     function setUp() public {
-        fork = ForkFactory.getFork();
-        fork.setUp();
+        vm.createSelectFork(vm.rpcUrl("https://polygon-mumbai.g.alchemy.com/v2/cmy55SdtwfrzfFpbN_SSjl9ioQscFnHJ"), 16_791_458);
 
-        tokens.push(IERC20(fork.get("USDT")));
-        tokens.push(IERC20(fork.get("WMATIC")));
+        address USDT = 0xA02f6adc7926efeBBd59Fd43A84f4E0c0c91e832;
+        address WMATIC = 0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889;
+        tokens.push(IERC20(USDT));
+        tokens.push(IERC20(WMATIC));
 
-        alice = freshAddress("alice");
-        bob = freshAddress("bob");
+        alice = makeAddr("alice");
+        bob = makeAddr("bob");
 
         N = new ERC20Normalizer();
     }

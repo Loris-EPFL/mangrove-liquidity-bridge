@@ -32,16 +32,18 @@ contract DexUniV3Test is Test2 {
     ERC20Normalizer N;
 
     function setUp() public {
-        fork = ForkFactory.getFork();
-        fork.setUp();
+        vm.createSelectFork(vm.rpcUrl("https://polygon-mumbai.g.alchemy.com/v2/cmy55SdtwfrzfFpbN_SSjl9ioQscFnHJ"), 16_791_458);
+
+        address USDT = 0xA02f6adc7926efeBBd59Fd43A84f4E0c0c91e832;
+        address WBTC = 0x0d787a4a1548f673ed375445535a6c7A1EE56180;
 
         fee = 3000;
 
-        base = IERC20(fork.get("WBTC"));
-        quote = IERC20(fork.get("USDT"));
+        base = IERC20(WBTC);
+        quote = IERC20(USDT);
 
-        alice = freshAddress("alice");
-        larry = freshAddress("larry");
+        alice = makeAddr("alice");
+        larry = makeAddr("larry");
 
         N = new ERC20Normalizer();
     }
