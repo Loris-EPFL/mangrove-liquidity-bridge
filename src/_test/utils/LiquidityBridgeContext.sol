@@ -42,11 +42,11 @@ abstract contract LiquidityBridgeContext is Test2 {
         N = new ERC20Normalizer();
         tickSpacing = 1;
 
-        vm.createSelectFork(vm.rpcUrl("https://polygon-mumbai.g.alchemy.com/v2/cmy55SdtwfrzfFpbN_SSjl9ioQscFnHJ"), 16_791_458);
+        fork = ForkFactory.getFork();
+        fork.setUp();
 
-
-        alice = makeAddr("alice");
-        larry = makeAddr("larry");
+        alice = freshAddress("alice");
+        larry = freshAddress("larry");
 
         setTokens();
 
