@@ -74,5 +74,13 @@
   {
     "name": "CRV",
     "address": "0x2bbF1f48a678d2f7c291dc5F8fD04805D34F485f"
+  },
+  {
+    "name": "WMATIC",
+    "address": "0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889"
+  },
+  {
+    "name": "UniV3 Factory",
+    "address": "0x1F98431c8aD98523631AE4a59f267346ea31F984"
   }
 ]

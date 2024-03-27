@@ -28,6 +28,7 @@ echo $CHAIN_NAME
 
 # defining URL?
 export CHAIN_NODE_URL_VAR=${CHAIN_NAME}_NODE_URL
+echo CHAIN_NODE_URL_VAR=${CHAIN_NAME}_NODE_URL
 eval "export NODE_URL=\$$CHAIN_NODE_URL_VAR"
 [ -z "$NODE_URL" ] && echo "$CHAIN_NODE_URL_VAR has not been set"
 
@@ -41,6 +42,7 @@ eval "export NODE_URL=\$$CHAIN_NODE_URL_VAR"
 export FORGE_KEYSTORE_PARAMS=()
 
 # defining chain id
+echo $NODE_URL
 export CHAIN_ID=$( cast chain-id --rpc-url "$NODE_URL" )
 echo "Chain id: $CHAIN_ID"
 

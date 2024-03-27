@@ -44,20 +44,22 @@ contract DeployUniV3BridgeScript is Script {
     ERC20Normalizer N = new ERC20Normalizer();
 
     function setUp() public {
+        console2.log("DeployUniV3BridgeScript.setUp");
         fork = ForkFactory.getFork();
         fork.setUp();
 
         chief = vm.envAddress("CHIEF");
+        console2.log("Chief", chief);
 
         setUpTokens();
 
         setUpMangrove();
-
+        
         setUpDex();
     }
 
     function run() public {
-        //setUp();
+        setUp();
         check();
 
         createDexLogic();
